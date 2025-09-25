@@ -28,12 +28,20 @@ import { NavLink, useLocation } from "react-router";
 
 const adminItems = [
   { title: "Overview", url: "/dashboard", icon: LayoutDashboard },
-  { title: "User Management", url: "/dashboard/users", icon: Users },
-  { title: "Products", url: "/dashboard/products", icon: Package },
-  { title: "Suppliers", url: "/dashboard/suppliers", icon: TruckIcon },
-  { title: "Payments", url: "/dashboard/payments", icon: DollarSign },
+  { title: "User Management", url: "/dashboard/user-management", icon: Users },
+  { title: "Products", url: "/dashboard/products-management", icon: Package },
+  {
+    title: "Suppliers",
+    url: "/dashboard/suppliers-management",
+    icon: TruckIcon,
+  },
+  {
+    title: "Payments",
+    url: "/dashboard/payments-management",
+    icon: DollarSign,
+  },
   { title: "Reports", url: "/dashboard/reports", icon: BarChart3 },
-  { title: "Returns", url: "/dashboard/returns", icon: RotateCcw },
+  { title: "Returns", url: "/dashboard/returns-management", icon: RotateCcw },
 ];
 
 const staffItems = [

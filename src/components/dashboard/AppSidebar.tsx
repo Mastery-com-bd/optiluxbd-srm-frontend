@@ -1,0 +1,155 @@
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
+} from "@/components/ui/sidebar";
+import type { RootState } from "@/redux/store";
+import {
+  BarChart3,
+  Boxes,
+  DollarSign,
+  LayoutDashboard,
+  Package,
+  Receipt,
+  RotateCcw,
+  Settings,
+  TruckIcon,
+  UserPlus,
+  Users,
+} from "lucide-react";
+import { useSelector } from "react-redux";
+import { NavLink, useLocation } from "react-router";
+
+const adminItems = [
+  { title: "Overview", url: "/dashboard", icon: LayoutDashboard },
+  { title: "User Management", url: "/dashboard/users", icon: Users },
+  { title: "Products", url: "/dashboard/products", icon: Package },
+  { title: "Suppliers", url: "/dashboard/suppliers", icon: TruckIcon },
+  { title: "Payments", url: "/dashboard/payments", icon: DollarSign },
+  { title: "Reports", url: "/dashboard/reports", icon: BarChart3 },
+  { title: "Returns", url: "/dashboard/returns", icon: RotateCcw },
+];
+
+const staffItems = [
+  { title: "Overview", url: "/dashboard", icon: LayoutDashboard },
+  { title: "Inventory", url: "/dashboard/inventory", icon: Boxes },
+  { title: "Returns", url: "/dashboard/returns", icon: RotateCcw },
+];
+
+const supplierItems = [
+  { title: "Overview", url: "/dashboard", icon: LayoutDashboard },
+  { title: "My Products", url: "/dashboard/my-products", icon: Package },
+  { title: "Supplies", url: "/dashboard/supplies", icon: TruckIcon },
+  { title: "Payments", url: "/dashboard/my-payments", icon: Receipt },
+];
+
+export function AppSidebar() {
+  const { user } = useSelector((state: RootState) => state.auth);
+  const { state: sidebarState } = useSidebar();
+  const location = useLocation();
+  const currentPath = location.pathname;
+
+  const getMenuItems = () => {
+    switch (user?.role) {
+      case "admin":
+        return adminItems;
+      case "staff":
+        return staffItems;
+      case "supplier":
+        return supplierItems;
+      default:
+        return [];
+    }
+  };
+
+  const menuItems = getMenuItems();
+
+  const isActive = (path: string) => {
+    if (path === "/dashboard") {
+      return currentPath === "/dashboard";
+    }
+    return currentPath.startsWith(path);
+  };
+
+  const getNavClassName = (itemUrl: string) => {
+    const active = isActive(itemUrl);
+    return active
+      ? "bg-primary/10 text-primary font-medium border-r-2 border-primary"
+      : "hover:bg-muted/50 text-muted-foreground hover:text-foreground";
+  };
+
+  return (
+    <Sidebar className={sidebarState === "collapsed" ? "w-16" : "w-64"}>
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 py-2">
+            Navigation
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {menuItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild className="h-10">
+                    <NavLink
+                      to={item.url}
+                      className={getNavClassName(item.url)}
+                    >
+                      <item.icon className="h-4 w-4 flex-shrink-0" />
+                      {sidebarState !== "collapsed" && (
+                        <span className="ml-3">{item.title}</span>
+                      )}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {user?.role === "admin" && (
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 py-2">
+              Admin Tools
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild className="h-10">
+                    <NavLink
+                      to="/dashboard/add-user"
+                      className={getNavClassName("/dashboard/add-user")}
+                    >
+                      <UserPlus className="h-4 w-4 flex-shrink-0" />
+                      {sidebarState !== "collapsed" && (
+                        <span className="ml-3">Add User</span>
+                      )}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild className="h-10">
+                    <NavLink
+                      to="/dashboard/settings"
+                      className={getNavClassName("/dashboard/settings")}
+                    >
+                      <Settings className="h-4 w-4 flex-shrink-0" />
+                      {sidebarState !== "collapsed" && (
+                        <span className="ml-3">Settings</span>
+                      )}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+      </SidebarContent>
+    </Sidebar>
+  );
+}

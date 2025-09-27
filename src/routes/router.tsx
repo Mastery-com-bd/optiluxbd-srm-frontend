@@ -16,6 +16,7 @@ import InventoryManagement from "@/pages/dashboard/staff/InventoryManagement";
 // import ResetPassword from "@/pages/Auth/ResetPassword";
 // import VerifyOTP from "@/pages/Auth/VerifyOTP";
 import MyPayments from "@/pages/dashboard/supplier/MyPayment";
+import MyProducts from "@/pages/dashboard/supplier/MyProducts";
 import HomePage from "@/pages/HomePage";
 import NotFound from "@/pages/NotFound";
 import { createBrowserRouter } from "react-router";
@@ -72,6 +73,10 @@ const router = createBrowserRouter([
           {
             path: "dashboard/my-payments",
             element: <MyPayments />,
+          },
+          {
+            path: "dashboard/my-products",
+            element: <MyProducts />,
           },
           { path: "dashboard/settings", element: <Settings /> },
         ],

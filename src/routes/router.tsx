@@ -6,6 +6,7 @@ import PaymentManagement from "@/pages/dashboard/PaymentManagement";
 import ProductManagement from "@/pages/dashboard/ProductManagement";
 import ReportsPage from "@/pages/dashboard/ReportPage";
 import ReturnsManagement from "@/pages/dashboard/ReturnsManagement";
+import Settings from "@/pages/dashboard/Settings";
 import SuppliesManagement from "@/pages/dashboard/SuppliesManagement";
 import UserManagement from "@/pages/dashboard/UserManagement";
 // import ForgotPasswordPage from "@/pages/Auth/ForgotPassword";
@@ -52,6 +53,7 @@ const router = createBrowserRouter([
         element: <ReportsPage />,
       },
       { path: "dashboard/returns-management", element: <ReturnsManagement /> },
+      { path: "dashboard/settings", element: <Settings /> },
     ],
   },
   {

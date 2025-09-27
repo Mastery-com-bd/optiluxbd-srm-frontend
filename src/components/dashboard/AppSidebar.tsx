@@ -47,7 +47,7 @@ const adminItems = [
 const staffItems = [
   { title: "Overview", url: "/dashboard", icon: LayoutDashboard },
   { title: "Inventory", url: "/dashboard/inventory", icon: Boxes },
-  { title: "Returns", url: "/dashboard/returns", icon: RotateCcw },
+  { title: "Returns", url: "/dashboard/returns-management", icon: RotateCcw },
 ];
 
 const supplierItems = [

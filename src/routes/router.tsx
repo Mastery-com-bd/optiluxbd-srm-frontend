@@ -1,14 +1,15 @@
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Layout } from "@/components/layouts/Layout";
-import AddUser from "@/pages/dashboard/AddUser";
+import AddUser from "@/pages/dashboard/admin/AddUser";
+import PaymentManagement from "@/pages/dashboard/admin/PaymentManagement";
+import ProductManagement from "@/pages/dashboard/admin/ProductManagement";
+import ReportsPage from "@/pages/dashboard/admin/ReportPage";
+import ReturnsManagement from "@/pages/dashboard/admin/ReturnsManagement";
+import SuppliesManagement from "@/pages/dashboard/admin/SuppliesManagement";
+import UserManagement from "@/pages/dashboard/admin/UserManagement";
 import Dashboard from "@/pages/dashboard/Dashboard";
-import PaymentManagement from "@/pages/dashboard/PaymentManagement";
-import ProductManagement from "@/pages/dashboard/ProductManagement";
-import ReportsPage from "@/pages/dashboard/ReportPage";
-import ReturnsManagement from "@/pages/dashboard/ReturnsManagement";
 import Settings from "@/pages/dashboard/Settings";
-import SuppliesManagement from "@/pages/dashboard/SuppliesManagement";
-import UserManagement from "@/pages/dashboard/UserManagement";
+import InventoryManagement from "@/pages/dashboard/staff/InventoryManagement";
 // import ForgotPasswordPage from "@/pages/Auth/ForgotPassword";
 // import Login from "@/pages/Auth/Login";
 // import Register from "@/pages/Auth/Register";
@@ -53,6 +54,10 @@ const router = createBrowserRouter([
         element: <ReportsPage />,
       },
       { path: "dashboard/returns-management", element: <ReturnsManagement /> },
+      {
+        path: "dashboard/inventory-management",
+        element: <InventoryManagement />,
+      },
       { path: "dashboard/settings", element: <Settings /> },
     ],
   },

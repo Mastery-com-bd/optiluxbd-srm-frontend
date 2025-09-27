@@ -94,7 +94,7 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar className={sidebarState === "collapsed" ? "w-16" : "w-64"}>
+    <Sidebar collapsible="icon">
       <SidebarContent>
         {/* Logo */}
         <div className="flex items-center justify-center">

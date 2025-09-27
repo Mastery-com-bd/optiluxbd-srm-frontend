@@ -32,7 +32,7 @@ export const DashboardHeader = () => {
   };
 
   return (
-    <header className="h-16 border-b bg-card flex items-center justify-between px-6">
+    <header className="h-16 border-b bg-card flex items-center justify-between px-6 sticky top-0 z-40">
       <div className="flex items-center gap-4">
         <SidebarTrigger />
         <div>

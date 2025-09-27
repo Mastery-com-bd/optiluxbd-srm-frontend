@@ -15,6 +15,8 @@ import InventoryManagement from "@/pages/dashboard/staff/InventoryManagement";
 // import Register from "@/pages/Auth/Register";
 // import ResetPassword from "@/pages/Auth/ResetPassword";
 // import VerifyOTP from "@/pages/Auth/VerifyOTP";
+import LoginPage from "@/pages/auth/LoginPage";
+import RegisterPage from "@/pages/auth/RegisterPage";
 import MyPayments from "@/pages/dashboard/supplier/MyPayment";
 import MyProducts from "@/pages/dashboard/supplier/MyProducts";
 import MySupplies from "@/pages/dashboard/supplier/MySupplies";
@@ -29,8 +31,8 @@ const router = createBrowserRouter([
     element: <Layout />,
     children: [
       { index: true, element: <HomePage /> },
-      //   { path: "login", element: <Login /> },
-      //   { path: "signup", element: <Register /> },
+      { path: "login", element: <LoginPage /> },
+      { path: "register", element: <RegisterPage /> },
       //   { path: "verify-otp", element: <VerifyOTP /> },
       //   { path: "forgot-password", element: <ForgotPasswordPage /> },
       //   { path: "reset-password", element: <ResetPassword /> },

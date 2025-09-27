@@ -1,7 +1,9 @@
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Layout } from "@/components/layouts/Layout";
+import ForgotPassword from "@/pages/auth/ForgotPassword";
 import LoginPage from "@/pages/auth/LoginPage";
 import RegisterPage from "@/pages/auth/RegisterPage";
+import ResetPassword from "@/pages/auth/ResetPassword";
 import VerifyEmail from "@/pages/auth/VerifyEmail";
 import AddUser from "@/pages/dashboard/admin/AddUser";
 import PaymentManagement from "@/pages/dashboard/admin/PaymentManagement";
@@ -30,8 +32,8 @@ const router = createBrowserRouter([
       { path: "login", element: <LoginPage /> },
       { path: "register", element: <RegisterPage /> },
       { path: "verify-email", element: <VerifyEmail /> },
-      //   { path: "forgot-password", element: <ForgotPasswordPage /> },
-      //   { path: "reset-password", element: <ResetPassword /> },
+      { path: "forgot-password", element: <ForgotPassword /> },
+      { path: "reset-password", element: <ResetPassword /> },
     ],
   },
 

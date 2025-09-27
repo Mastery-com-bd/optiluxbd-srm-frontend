@@ -1,3 +1,4 @@
+import OptiluxLogo from "@/assets/Optilux-Logo.png";
 import {
   Sidebar,
   SidebarContent,
@@ -24,7 +25,7 @@ import {
   Users,
 } from "lucide-react";
 import { useSelector } from "react-redux";
-import { NavLink, useLocation } from "react-router";
+import { Link, NavLink, useLocation } from "react-router";
 
 const adminItems = [
   { title: "Overview", url: "/dashboard", icon: LayoutDashboard },
@@ -95,6 +96,19 @@ export function AppSidebar() {
   return (
     <Sidebar className={sidebarState === "collapsed" ? "w-16" : "w-64"}>
       <SidebarContent>
+        {/* Logo */}
+        <div className="flex items-center justify-center">
+          <Link
+            to="/"
+            className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
+          >
+            <img
+              src={OptiluxLogo}
+              className="h-16 w-32 object-contain"
+              alt="OptiluxBD Logo"
+            />
+          </Link>
+        </div>
         <SidebarGroup>
           <SidebarGroupLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 py-2">
             Navigation

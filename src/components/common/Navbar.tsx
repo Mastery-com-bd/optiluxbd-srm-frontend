@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import OptiluxLogo from "@/assets/Optilux-Logo.png";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,7 +15,6 @@ import { logout } from "@/redux/features/auth//authSlice";
 import type { RootState } from "@/redux/store";
 import {
   BarChart3,
-  Building2,
   LogOut,
   Menu,
   Package,
@@ -97,12 +97,17 @@ const Navbar = () => {
               to="/"
               className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
             >
-              <div className="w-8 h-8 gradient-primary rounded-lg flex items-center justify-center">
+              <img
+                src={OptiluxLogo}
+                className="h-16 w-32 object-contain"
+                alt="OptiluxBD Logo"
+              />
+              {/* <div className="w-8 h-8 gradient-primary rounded-lg flex items-center justify-center">
                 <Building2 className="h-5 w-5 text-white" />
-              </div>
-              <span className="font-bold text-lg text-foreground">
+              </div> */}
+              {/* <span className="font-bold text-lg text-foreground">
                 OptiluxBD
-              </span>
+              </span> */}
             </Link>
           </div>
 

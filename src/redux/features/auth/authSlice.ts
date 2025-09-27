@@ -31,7 +31,7 @@ const initialState: AuthState = {
     email: "admin@optiluxbd.com",
     isEmailVerified: true,
     status: "active",
-    role: "supplier",
+    role: "admin",
     profile: {
       name: "Admin User",
       phone: "+8801712345678",

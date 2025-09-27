@@ -18,6 +18,7 @@ import InventoryManagement from "@/pages/dashboard/staff/InventoryManagement";
 import HomePage from "@/pages/HomePage";
 import NotFound from "@/pages/NotFound";
 import { createBrowserRouter } from "react-router";
+import ProtectedRoute from "./ProtectedRoute";
 
 const router = createBrowserRouter([
   {
@@ -33,34 +34,46 @@ const router = createBrowserRouter([
     ],
   },
 
-  // Admin Dashboard
+  // Protected Routes for all authenticated users
   {
-    element: <DashboardLayout />,
+    element: <ProtectedRoute />, // Checks auth
     children: [
-      { path: "dashboard", element: <Dashboard /> },
-      { path: "dashboard/user-management", element: <UserManagement /> },
-      { path: "dashboard/add-user", element: <AddUser /> },
-      { path: "dashboard/products-management", element: <ProductManagement /> },
       {
-        path: "dashboard/suppliers-management",
-        element: <SuppliesManagement />,
+        element: <DashboardLayout />, // Layout for dashboard pages
+        children: [
+          { path: "dashboard", element: <Dashboard /> },
+          { path: "dashboard/user-management", element: <UserManagement /> },
+          { path: "dashboard/add-user", element: <AddUser /> },
+          {
+            path: "dashboard/products-management",
+            element: <ProductManagement />,
+          },
+          {
+            path: "dashboard/suppliers-management",
+            element: <SuppliesManagement />,
+          },
+          {
+            path: "dashboard/payments-management",
+            element: <PaymentManagement />,
+          },
+          {
+            path: "dashboard/reports",
+            element: <ReportsPage />,
+          },
+          {
+            path: "dashboard/returns-management",
+            element: <ReturnsManagement />,
+          },
+          {
+            path: "dashboard/inventory",
+            element: <InventoryManagement />,
+          },
+          { path: "dashboard/settings", element: <Settings /> },
+        ],
       },
-      {
-        path: "dashboard/payments-management",
-        element: <PaymentManagement />,
-      },
-      {
-        path: "dashboard/reports",
-        element: <ReportsPage />,
-      },
-      { path: "dashboard/returns-management", element: <ReturnsManagement /> },
-      {
-        path: "dashboard/inventory-management",
-        element: <InventoryManagement />,
-      },
-      { path: "dashboard/settings", element: <Settings /> },
     ],
   },
+  // Catch-all route for 404 Not Found
   {
     path: "*",
     element: <NotFound />,

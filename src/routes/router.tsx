@@ -1,5 +1,8 @@
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Layout } from "@/components/layouts/Layout";
+import LoginPage from "@/pages/auth/LoginPage";
+import RegisterPage from "@/pages/auth/RegisterPage";
+import VerifyEmail from "@/pages/auth/VerifyEmail";
 import AddUser from "@/pages/dashboard/admin/AddUser";
 import PaymentManagement from "@/pages/dashboard/admin/PaymentManagement";
 import ProductManagement from "@/pages/dashboard/admin/ProductManagement";
@@ -10,13 +13,6 @@ import UserManagement from "@/pages/dashboard/admin/UserManagement";
 import Dashboard from "@/pages/dashboard/Dashboard";
 import Settings from "@/pages/dashboard/Settings";
 import InventoryManagement from "@/pages/dashboard/staff/InventoryManagement";
-// import ForgotPasswordPage from "@/pages/Auth/ForgotPassword";
-// import Login from "@/pages/Auth/Login";
-// import Register from "@/pages/Auth/Register";
-// import ResetPassword from "@/pages/Auth/ResetPassword";
-// import VerifyOTP from "@/pages/Auth/VerifyOTP";
-import LoginPage from "@/pages/auth/LoginPage";
-import RegisterPage from "@/pages/auth/RegisterPage";
 import MyPayments from "@/pages/dashboard/supplier/MyPayment";
 import MyProducts from "@/pages/dashboard/supplier/MyProducts";
 import MySupplies from "@/pages/dashboard/supplier/MySupplies";
@@ -33,7 +29,7 @@ const router = createBrowserRouter([
       { index: true, element: <HomePage /> },
       { path: "login", element: <LoginPage /> },
       { path: "register", element: <RegisterPage /> },
-      //   { path: "verify-otp", element: <VerifyOTP /> },
+      { path: "verify-email", element: <VerifyEmail /> },
       //   { path: "forgot-password", element: <ForgotPasswordPage /> },
       //   { path: "reset-password", element: <ResetPassword /> },
     ],

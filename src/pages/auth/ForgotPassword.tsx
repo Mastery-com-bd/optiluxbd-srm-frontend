@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -8,153 +9,80 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Building2, Mail } from "lucide-react";
-import { useState } from "react";
+import { useForgotPasswordMutation } from "@/redux/features/auth/authApi";
+import { zodResolver } from "@hookform/resolvers/zod";
+import React from "react";
+import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
+import { z } from "zod";
 
-const ForgotPassword = () => {
-  const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [sent, setSent] = useState(false);
+const schema = z.object({
+  email: z.email("Valid email required"),
+});
 
+type Values = z.infer<typeof schema>;
+
+const ForgotPasswordPage: React.FC = () => {
+  const [forgotPassword, { isLoading }] = useForgotPasswordMutation();
   const navigate = useNavigate();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<Values>({ resolver: zodResolver(schema) });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    // Mock password reset request
-    setTimeout(() => {
-      setSent(true);
-      toast.success("Please check your email for password reset instructions");
-      setLoading(false);
-    }, 1000);
+  const onSubmit = async (values: Values) => {
+    try {
+      await forgotPassword({ email: values.email }).unwrap();
+      toast.success("OTP sent to your email");
+      navigate("/reset-password", { state: { email: values.email } });
+    } catch (e: any) {
+      toast.error(
+        e?.data?.error || e?.data?.message || "Failed to send reset OTP"
+      );
+    }
   };
 
-  const handleBack = () => {
-    navigate("/login");
-  };
-
-  if (sent) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <div className="w-12 h-12 gradient-primary rounded-xl flex items-center justify-center">
-                <Mail className="h-6 w-6 text-white" />
-              </div>
-            </div>
-            <CardTitle className="text-2xl font-bold">
-              Check Your Email
-            </CardTitle>
+  return (
+    <div className="container mx-auto px-4 py-12">
+      <div className="max-w-md mx-auto">
+        <Card>
+          <CardHeader>
+            <CardTitle>Forgot Password</CardTitle>
             <CardDescription>
-              We've sent a password reset link to
-              <br />
-              <span className="font-medium text-foreground">{email}</span>
+              Enter your email to receive a password reset OTP.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="text-center text-sm text-muted-foreground space-y-2">
-              <p>Click the link in your email to reset your password.</p>
-              <p>The link will expire in 24 hours.</p>
-            </div>
-
-            <Button variant="outline" onClick={handleBack} className="w-full">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Login
-            </Button>
-
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground">
-                Didn't receive the email?{" "}
-                <button
-                  onClick={() => setSent(false)}
-                  className="text-primary hover:underline font-medium"
-                >
-                  Try again
-                </button>
-              </p>
-            </div>
+          <CardContent>
+            <form
+              onSubmit={handleSubmit(onSubmit)}
+              className="space-y-6"
+              noValidate
+            >
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" type="email" {...register("email")} />
+                {errors.email && (
+                  <p className="text-xs text-destructive">
+                    {errors.email.message}
+                  </p>
+                )}
+              </div>
+              <Button className="w-full" type="submit" disabled={isLoading}>
+                {isLoading ? "Sending..." : "Send OTP"}
+              </Button>
+            </form>
+            <p className="mt-6 text-center text-sm">
+              <Link to="/login" className="text-primary hover:underline">
+                Back to Login
+              </Link>
+            </p>
           </CardContent>
         </Card>
       </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <div className="w-12 h-12 gradient-primary rounded-xl flex items-center justify-center">
-              <Building2 className="h-6 w-6 text-white" />
-            </div>
-          </div>
-          <CardTitle className="text-2xl font-bold">Forgot Password</CardTitle>
-          <CardDescription>
-            Enter your email address and we'll send you a link to reset your
-            password
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="Enter your email address"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10"
-                  required
-                />
-              </div>
-            </div>
-
-            <Button
-              type="submit"
-              className="w-full"
-              variant="gradient"
-              disabled={loading}
-            >
-              {loading ? "Sending..." : "Send Reset Link"}
-            </Button>
-          </form>
-
-          <div className="mt-6 space-y-4">
-            <Button variant="outline" onClick={handleBack} className="w-full">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Login
-            </Button>
-
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground">
-                Remember your password?{" "}
-                <Link
-                  to="/login"
-                  className="text-primary hover:underline font-medium"
-                >
-                  Sign in
-                </Link>
-              </p>
-            </div>
-          </div>
-
-          {/* Demo Note */}
-          <div className="mt-6 p-4 bg-muted/50 rounded-lg">
-            <p className="text-xs text-muted-foreground text-center">
-              <strong>Demo:</strong> Use any email address to see the reset flow
-            </p>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };
 
-export default ForgotPassword;
+export default ForgotPasswordPage;

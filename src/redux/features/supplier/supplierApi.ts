@@ -1,4 +1,3 @@
-// src/redux/api/supplierApi.ts
 import { baseApi } from "@/redux/baseApi";
 
 export const supplierApi = baseApi.injectEndpoints({

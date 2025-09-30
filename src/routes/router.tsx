@@ -2,6 +2,7 @@ import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Layout } from "@/components/layouts/Layout";
 import ForgotPassword from "@/pages/auth/ForgotPassword";
 import LoginPage from "@/pages/auth/LoginPage";
+import PendingApproval from "@/pages/auth/PendingApproval";
 import RegisterPage from "@/pages/auth/RegisterPage";
 import ResetPassword from "@/pages/auth/ResetPassword";
 import VerifyEmail from "@/pages/auth/VerifyEmail";
@@ -34,6 +35,7 @@ const router = createBrowserRouter([
       { path: "verify-email", element: <VerifyEmail /> },
       { path: "forgot-password", element: <ForgotPassword /> },
       { path: "reset-password", element: <ResetPassword /> },
+      { path: "pending-approval", element: <PendingApproval /> },
     ],
   },
 

@@ -1,222 +1,261 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Building2, Eye, EyeOff, Lock } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router";
+import { useResetPasswordWithOtpMutation } from "@/redux/features/auth/authApi";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { ArrowLeft, CheckCircle, Eye, EyeOff } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { Link, useLocation, useNavigate } from "react-router";
 import { toast } from "sonner";
+import { z } from "zod";
 
-const ResetPassword = () => {
-  const [passwords, setPasswords] = useState({
-    newPassword: "",
-    confirmPassword: "",
-  });
-  const [showPasswords, setShowPasswords] = useState({
-    newPassword: false,
-    confirmPassword: false,
-  });
-  const [loading, setLoading] = useState(false);
-  const [validToken, setValidToken] = useState(true);
+const passwordPolicy = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[^\w\s]).{8,}$/;
 
-  const [searchParams] = useSearchParams();
+const resetPasswordSchema = z
+  .object({
+    email: z.email("Valid email required"),
+    otp: z
+      .string()
+      .min(6, "OTP must be 6 digits")
+      .max(6, "OTP must be 6 digits"),
+    newPassword: z
+      .string()
+      .min(8, "Minimum 8 characters")
+      .regex(
+        passwordPolicy,
+        "Password must contain upper, lower, number & special char"
+      ),
+    confirmPassword: z.string(),
+  })
+  .refine((d) => d.newPassword === d.confirmPassword, {
+    path: ["confirmPassword"],
+    message: "Passwords do not match",
+  });
+
+type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
+
+const ResetPassword: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const prefillEmail = (location.state as any)?.email || "";
+  const [resetPassword, { isLoading }] = useResetPasswordWithOtpMutation();
 
-  const token = searchParams.get("token");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [resetSuccess, setResetSuccess] = useState(false);
+
+  const form = useForm<ResetPasswordFormData>({
+    resolver: zodResolver(resetPasswordSchema),
+    defaultValues: {
+      email: prefillEmail,
+      otp: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
+  });
+
+  const onSubmit = async (values: ResetPasswordFormData) => {
+    try {
+      await resetPassword({
+        email: values.email,
+        otp: values.otp,
+        newPassword: values.newPassword,
+      }).unwrap();
+
+      setResetSuccess(true);
+      toast.success("Password reset successful. Redirecting to login...");
+      setTimeout(() => {
+        navigate("/login");
+      }, 5000);
+    } catch (e: any) {
+      toast.error(
+        e?.data?.error || e?.data?.message || "Password reset failed"
+      );
+    }
+  };
 
   useEffect(() => {
-    // Mock token validation
-    if (!token) {
-      setValidToken(false);
-      toast.error("This password reset link is invalid or has expired");
-      return;
+    if (!prefillEmail) {
+      toast.error("Missing email context, please sign up.");
+      navigate("/signup");
     }
-  }, [token]);
+  }, [prefillEmail, navigate]);
 
-  const handleInputChange = (field: string, value: string) => {
-    setPasswords((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const togglePasswordVisibility = (
-    field: "newPassword" | "confirmPassword"
-  ) => {
-    setShowPasswords((prev) => ({ ...prev, [field]: !prev[field] }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (passwords.newPassword !== passwords.confirmPassword) {
-      toast.error("Passwords do not match");
-      return;
-    }
-
-    if (passwords.newPassword.length < 6) {
-      toast.error("Password must be at least 6 characters long");
-      return;
-    }
-
-    setLoading(true);
-
-    // Mock password reset
-    setTimeout(() => {
-      toast.success("Your password has been updated successfully");
-      navigate("/login");
-      setLoading(false);
-    }, 1000);
-  };
-
-  if (!validToken) {
+  if (resetSuccess) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <div className="w-12 h-12 bg-destructive/10 rounded-xl flex items-center justify-center">
-                <Lock className="h-6 w-6 text-destructive" />
+      <div className="min-h-screen bg-gradient-subtle flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          <Card className="shadow-strong border-0">
+            <CardContent className="pt-6">
+              <div className="text-center space-y-6">
+                <div className="flex justify-center">
+                  <div className="p-4 bg-green-100 dark:bg-green-900/20 rounded-full">
+                    <CheckCircle className="h-12 w-12 text-green-600" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <h2 className="text-2xl font-heading font-bold text-foreground">
+                    Password Reset Complete
+                  </h2>
+                  <p className="text-muted-foreground">
+                    Your password has been successfully updated. You will be
+                    redirected to the login page shortly.
+                  </p>
+                </div>
+                <Link to="/login">
+                  <Button className="w-full btn-cta">Continue to Login</Button>
+                </Link>
               </div>
-            </div>
-            <CardTitle className="text-2xl font-bold text-destructive">
-              Invalid Reset Link
-            </CardTitle>
-            <CardDescription>
-              This password reset link is invalid or has expired. Please request
-              a new one.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button
-              variant="outline"
-              onClick={() => navigate("/forgot-password")}
-              className="w-full"
-            >
-              Request New Reset Link
-            </Button>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <div className="w-12 h-12 gradient-primary rounded-xl flex items-center justify-center">
-              <Building2 className="h-6 w-6 text-white" />
+    <div className="min-h-screen bg-gradient-subtle flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <Card className="shadow-strong border-0">
+          <CardHeader className="text-center space-y-4">
+            <div className="flex items-center justify-between">
+              <Link
+                to="/login"
+                className="p-2 hover:bg-muted rounded-full transition-colors"
+              >
+                <ArrowLeft className="h-5 w-5 text-muted-foreground" />
+              </Link>
+              <div className="flex-1" />
             </div>
-          </div>
-          <CardTitle className="text-2xl font-bold">Reset Password</CardTitle>
-          <CardDescription>Enter your new password below</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* New Password */}
-            <div className="space-y-2">
-              <Label htmlFor="newPassword">New Password</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="newPassword"
-                  type={showPasswords.newPassword ? "text" : "password"}
-                  placeholder="Enter new password"
-                  value={passwords.newPassword}
-                  onChange={(e) =>
-                    handleInputChange("newPassword", e.target.value)
-                  }
-                  className="pl-10 pr-10"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => togglePasswordVisibility("newPassword")}
-                  className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
-                >
-                  {showPasswords.newPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </button>
-              </div>
-            </div>
+            <CardTitle className="text-2xl font-heading text-foreground">
+              Reset Password
+            </CardTitle>
+            <p className="text-muted-foreground">
+              Enter your OTP, email and new password below.
+            </p>
+          </CardHeader>
 
-            {/* Confirm Password */}
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm New Password</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="confirmPassword"
-                  type={showPasswords.confirmPassword ? "text" : "password"}
-                  placeholder="Confirm new password"
-                  value={passwords.confirmPassword}
-                  onChange={(e) =>
-                    handleInputChange("confirmPassword", e.target.value)
-                  }
-                  className="pl-10 pr-10"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => togglePasswordVisibility("confirmPassword")}
-                  className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
-                >
-                  {showPasswords.confirmPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* Password Requirements */}
-            <div className="text-xs text-muted-foreground space-y-1">
-              <p>Password requirements:</p>
-              <ul className="list-disc list-inside space-y-1 ml-2">
-                <li
-                  className={
-                    passwords.newPassword.length >= 6 ? "text-success" : ""
-                  }
-                >
-                  At least 6 characters long
-                </li>
-                <li
-                  className={
-                    passwords.newPassword === passwords.confirmPassword &&
-                    passwords.confirmPassword.length > 0
-                      ? "text-success"
-                      : ""
-                  }
-                >
-                  Passwords match
-                </li>
-              </ul>
-            </div>
-
-            <Button
-              type="submit"
-              className="w-full"
-              variant="gradient"
-              disabled={
-                loading ||
-                passwords.newPassword.length < 6 ||
-                passwords.newPassword !== passwords.confirmPassword
-              }
+          <CardContent>
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="space-y-6"
+              noValidate
             >
-              {loading ? "Updating Password..." : "Update Password"}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+              {/* Email */}
+              <div>
+                <label className="block text-sm font-medium mb-1">Email</label>
+                <Input
+                  type="email"
+                  readOnly
+                  placeholder="Enter your email"
+                  {...form.register("email")}
+                  className="h-12"
+                />
+                {form.formState.errors.email && (
+                  <p className="text-xs text-destructive mt-1">
+                    {form.formState.errors.email.message}
+                  </p>
+                )}
+              </div>
+
+              {/* OTP */}
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  OTP Code
+                </label>
+                <Input
+                  type="text"
+                  maxLength={6}
+                  placeholder="Enter OTP"
+                  {...form.register("otp")}
+                  className="h-12"
+                />
+                {form.formState.errors.otp && (
+                  <p className="text-xs text-destructive mt-1">
+                    {form.formState.errors.otp.message}
+                  </p>
+                )}
+              </div>
+
+              {/* New Password */}
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  New Password
+                </label>
+                <div className="relative">
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter your new password"
+                    {...form.register("newPassword")}
+                    className="h-12 pr-12"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-0 top-0 h-12 w-12 hover:bg-transparent"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
+                </div>
+                {form.formState.errors.newPassword && (
+                  <p className="text-xs text-destructive mt-1">
+                    {form.formState.errors.newPassword.message}
+                  </p>
+                )}
+              </div>
+
+              {/* Confirm Password */}
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Confirm Password
+                </label>
+                <div className="relative">
+                  <Input
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="Confirm your new password"
+                    {...form.register("confirmPassword")}
+                    className="h-12 pr-12"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-0 top-0 h-12 w-12 hover:bg-transparent"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
+                </div>
+                {form.formState.errors.confirmPassword && (
+                  <p className="text-xs text-destructive mt-1">
+                    {form.formState.errors.confirmPassword.message}
+                  </p>
+                )}
+              </div>
+
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className="w-full h-12 btn-cta"
+              >
+                {isLoading ? "Updating..." : "Update Password"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -8,49 +9,40 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { mockUsers } from "@/data/mockData";
-import { setCredentials } from "@/redux/features/auth/authSlice";
-import { Building2, Lock, Mail } from "lucide-react";
+import { useLoginMutation, useMeQuery } from "@/redux/features/auth/authApi"; // Adjust import
+import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { useState } from "react";
-import { useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router";
+import { toast } from "sonner";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [login] = useLoginMutation();
+  const { data: user } = useMeQuery(undefined); // Assuming this is called after login, but might need to refetch or handle in effect
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
-    // Mock authentication - in real app, this would be an API call
-    setTimeout(() => {
-      const user = mockUsers.find((u) => u.email === email);
-      if (user) {
-        dispatch(
-          setCredentials({
-            user: {
-              ...user,
-              isEmailVerified: true,
-              profile: {
-                ...user.profile,
-                avatarUrl: null,
-                address: "Dhaka, Bangladesh",
-                joinDate: "2024-01-01",
-              },
-              createdAt: "2024-01-01T00:00:00Z",
-              updatedAt: "2024-01-01T00:00:00Z",
-            },
-            token: "mock-jwt-token",
-          })
-        );
-        navigate("/dashboard");
+    try {
+      await login({ email, password }).unwrap();
+      // After login, check user status
+      // Assuming me query refetches automatically due to invalidatesTags ["Auth", "User"]
+      if (user.email && !user.isApproved) {
+        // Assume user has isApproved field
+        navigate("/pending-approval");
+      } else {
+        toast.success("Login successful");
+        navigate("/dashboard"); // Or home
       }
+    } catch (error) {
+      toast.error("Login failed. Please check your credentials.");
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -59,11 +51,13 @@ const LoginPage = () => {
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
             <div className="w-12 h-12 gradient-primary rounded-xl flex items-center justify-center">
-              <Building2 className="h-6 w-6 text-white" />
+              <Mail className="h-6 w-6 text-white" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
-          <CardDescription>Sign in to your OptiluxBD account</CardDescription>
+          <CardTitle className="text-2xl font-bold">Sign In</CardTitle>
+          <CardDescription>
+            Enter your credentials to access your account
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -82,59 +76,65 @@ const LoginPage = () => {
                 />
               </div>
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 pr-10"
                   required
                 />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-0"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </Button>
               </div>
             </div>
+
             <Button
               type="submit"
               className="w-full"
               variant="gradient"
               disabled={loading}
             >
-              {loading ? "Signing in..." : "Sign In"}
+              {loading ? "Signing In..." : "Sign In"}
             </Button>
           </form>
 
-          <div className="mt-6 text-center">
+          <div className="mt-6 text-center space-y-2">
             <p className="text-sm text-muted-foreground">
               Don't have an account?{" "}
               <Link
                 to="/register"
                 className="text-primary hover:underline font-medium"
               >
-                Sign up
+                Create one
               </Link>
             </p>
             <p className="text-sm text-muted-foreground">
+              Forgot password?{" "}
               <Link
                 to="/forgot-password"
                 className="text-primary hover:underline font-medium"
               >
-                Forgot your password?
+                Reset it
               </Link>
             </p>
-          </div>
-
-          <div className="mt-6 p-4 bg-muted/50 rounded-lg">
-            <h4 className="font-medium mb-2">Demo Accounts:</h4>
-            <div className="space-y-1 text-xs text-muted-foreground">
-              <div>Admin: admin@optiluxbd.com</div>
-              <div>Supplier: supplier1@example.com</div>
-              <div>Staff: staff1@optiluxbd.com</div>
-              <div className="pt-1 text-xs">Password: any password</div>
-            </div>
           </div>
         </CardContent>
       </Card>

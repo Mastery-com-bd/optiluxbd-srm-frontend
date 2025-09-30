@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,11 +12,14 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
+import {
+  useResendOtpMutation,
+  useVerifyEmailMutation,
+} from "@/redux/features/auth/authApi"; // Adjust import
 import { ArrowLeft, Mail } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { toast } from "sonner";
-// import { useToast } from '@/hooks/use-toast';
 
 const VerifyEmail = () => {
   const [otp, setOtp] = useState("");
@@ -26,7 +30,8 @@ const VerifyEmail = () => {
 
   const location = useLocation();
   const navigate = useNavigate();
-  // const { toast } = useToast();
+  const [verifyEmail] = useVerifyEmailMutation();
+  const [resendOtp] = useResendOtpMutation();
 
   const email = location.state?.email || "";
 
@@ -39,6 +44,7 @@ const VerifyEmail = () => {
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
+          clearInterval(timer);
           setCanResend(true);
           return 0;
         }
@@ -56,29 +62,29 @@ const VerifyEmail = () => {
     }
 
     setLoading(true);
-
-    // Mock verification
-    setTimeout(() => {
-      if (otp === "123456") {
-        toast.success("Your account has been successfully verified");
-        navigate("/login");
-      } else {
-        toast.error("The verification code you entered is incorrect");
-      }
+    try {
+      await verifyEmail({ email, otp }).unwrap();
+      toast.success("Your account has been successfully verified");
+      navigate("/login");
+    } catch (error) {
+      toast.error("The verification code you entered is incorrect");
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   const handleResend = async () => {
     setResendLoading(true);
-
-    // Mock resend
-    setTimeout(() => {
+    try {
+      await resendOtp({ email }).unwrap();
       toast.success("A new verification code has been sent to your email");
       setCountdown(60);
       setCanResend(false);
+    } catch (error) {
+      toast.error("Failed to resend OTP. Please try again.");
+    } finally {
       setResendLoading(false);
-    }, 1000);
+    }
   };
 
   const handleBack = () => {
@@ -158,14 +164,6 @@ const VerifyEmail = () => {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Registration
           </Button>
-
-          {/* Demo Note */}
-          <div className="mt-6 p-4 bg-muted/50 rounded-lg">
-            <p className="text-xs text-muted-foreground text-center">
-              <strong>Demo:</strong> Use{" "}
-              <span className="font-mono">123456</span> as the verification code
-            </p>
-          </div>
         </CardContent>
       </Card>
     </div>

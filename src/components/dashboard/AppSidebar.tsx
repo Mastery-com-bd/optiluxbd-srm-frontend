@@ -10,7 +10,8 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import type { RootState } from "@/redux/store";
+import { useAuth } from "@/hooks/useAuth";
+
 import {
   BarChart3,
   Boxes,
@@ -24,7 +25,7 @@ import {
   UserPlus,
   Users,
 } from "lucide-react";
-import { useSelector } from "react-redux";
+// import { useSelector } from "react-redux";
 import { Link, NavLink, useLocation } from "react-router";
 
 const adminItems = [
@@ -59,7 +60,8 @@ const supplierItems = [
 ];
 
 export function AppSidebar() {
-  const { user } = useSelector((state: RootState) => state.auth);
+  // const { user } = useSelector((state: RootState) => state.auth);
+  const { user } = useAuth();
   const { state: sidebarState } = useSidebar();
   const location = useLocation();
   const currentPath = location.pathname;

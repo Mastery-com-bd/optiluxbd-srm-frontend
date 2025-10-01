@@ -38,6 +38,10 @@ export const authApi = baseApi.injectEndpoints({
           Cookies.set("accessToken", data.accessToken, { secure: true });
           Cookies.set("refreshToken", data.refreshToken, { secure: true });
           Cookies.set("role", data.role, { secure: true });
+          Cookies.set("status", data.status, { secure: true });
+          Cookies.set("isEmailVerified", data.isEmailVerified, {
+            secure: true,
+          });
         } catch (err) {
           console.error("Login failed", err);
         }
@@ -55,6 +59,8 @@ export const authApi = baseApi.injectEndpoints({
           Cookies.remove("accessToken");
           Cookies.remove("refreshToken");
           Cookies.remove("role");
+          Cookies.remove("status");
+          Cookies.remove("isEmailVerified");
         }
       },
       invalidatesTags: ["Auth", "User"],

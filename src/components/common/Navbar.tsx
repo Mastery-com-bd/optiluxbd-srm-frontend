@@ -37,7 +37,7 @@ const Navbar = () => {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
-    await logout(undefined);
+    await logout({}).unwrap();
     navigate("/");
   };
 

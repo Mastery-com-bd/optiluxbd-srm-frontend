@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,9 +22,14 @@ export const DashboardHeader = () => {
   // const dispatch = useDispatch();
   const [logout] = useLogoutMutation();
 
-  const handleLogout = () => {
-    // pass a single argument to match the mutation's expected signature
-    logout({} as any);
+  const handleLogout = async () => {
+    try {
+      await logout({}).unwrap();
+      // Optionally hard redirect or use navigation
+      window.location.href = "/login";
+    } catch {
+      // swallow; could add toast
+    }
   };
 
   const getInitials = (name: string) => {

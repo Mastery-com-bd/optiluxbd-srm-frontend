@@ -11,8 +11,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { logout } from "@/redux/features/auth//authSlice";
-import type { RootState } from "@/redux/store";
+import { useLogoutMutation } from "@/redux/features/auth//authApi";
+// import type { RootState } from "@/redux/store";
 import {
   BarChart3,
   LogOut,
@@ -23,21 +23,21 @@ import {
   Users,
 } from "lucide-react";
 import { useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+// import { useDispatch, useSelector } from "react-redux";
+import { useAuth } from "@/hooks/useAuth";
 import { Link, useNavigate } from "react-router";
 import { ThemeToggle } from "./ThemeToggle";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   // const { theme, setTheme } = useTheme();
-  const { user, isAuthenticated } = useSelector(
-    (state: RootState) => (state as any).auth
-  );
-  const dispatch = useDispatch();
+  const { user } = useAuth();
+  const [logout] = useLogoutMutation();
+
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    dispatch(logout());
+  const handleLogout = async () => {
+    await logout(undefined);
     navigate("/");
   };
 
@@ -50,7 +50,7 @@ const Navbar = () => {
     href: string;
     icon?: any;
   }> => {
-    if (!isAuthenticated) {
+    if (!user) {
       return [
         { name: "Home", href: "/" },
         { name: "Features", href: "/#features" },
@@ -139,7 +139,7 @@ const Navbar = () => {
             </Button> */}
             <ThemeToggle />
 
-            {isAuthenticated ? (
+            {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -243,7 +243,7 @@ const Navbar = () => {
 
                   <div className="border-t border-border my-4" />
 
-                  {!isAuthenticated ? (
+                  {!user ? (
                     <>
                       <Button
                         variant="ghost"

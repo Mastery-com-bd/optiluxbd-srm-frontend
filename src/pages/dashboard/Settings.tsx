@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,16 +8,17 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { updateProfile } from "@/redux/features//auth/authSlice";
-import { type RootState } from "@/redux/store";
+import { useAuth } from "@/hooks/useAuth";
+// import { updateProfile } from "@/redux/features//auth/authSlice";
+// import { type RootState } from "@/redux/store";
 import { Bell, Eye, EyeOff, Lock, Save, Shield, User } from "lucide-react";
 import { useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { toast } from "sonner";
 // import { useToast } from '@/hooks/use-toast';
 
 const Settings = () => {
-  const { user } = useSelector((state: RootState) => state.auth);
+  const { user } = useAuth();
   const dispatch = useDispatch();
   //   const { toast } = useToast();
 
@@ -486,3 +489,10 @@ const Settings = () => {
 };
 
 export default Settings;
+function updateProfile(_profileData: {
+  name: any;
+  phone: any;
+  address: any;
+}): any {
+  throw new Error("Function not implemented.");
+}

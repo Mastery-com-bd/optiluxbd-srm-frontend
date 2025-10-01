@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,18 +10,22 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { logout } from "@/redux/features/auth/authSlice";
-import { type RootState } from "@/redux/store";
+// import { logout } from "@/redux/features/auth/authSlice";
+// import { type RootState } from "@/redux/store";
 import { LogOut, Settings, User } from "lucide-react";
-import { useDispatch, useSelector } from "react-redux";
+// import { useDispatch, useSelector } from "react-redux";
+import { useAuth } from "@/hooks/useAuth";
+import { useLogoutMutation } from "@/redux/features/auth/authApi";
 import { ThemeToggle } from "../common/ThemeToggle";
 
 export const DashboardHeader = () => {
-  const { user } = useSelector((state: RootState) => state.auth);
-  const dispatch = useDispatch();
+  const { user } = useAuth();
+  // const dispatch = useDispatch();
+  const [logout] = useLogoutMutation();
 
   const handleLogout = () => {
-    dispatch(logout());
+    // pass a single argument to match the mutation's expected signature
+    logout({} as any);
   };
 
   const getInitials = (name: string) => {

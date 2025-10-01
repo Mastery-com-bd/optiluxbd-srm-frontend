@@ -1,11 +1,12 @@
-import type { RootState } from "@/redux/store";
-import { useSelector } from "react-redux";
+import { useAuth } from "@/hooks/useAuth";
+// import type { RootState } from "@/redux/store";
+// import { useSelector } from "react-redux";
 import { Navigate, Outlet } from "react-router";
 
 const ProtectedRoute = () => {
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const { user } = useAuth();
 
-  if (!isAuthenticated) {
+  if (!user) {
     return <Navigate to="/login" replace />;
   }
 

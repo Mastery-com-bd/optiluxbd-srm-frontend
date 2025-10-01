@@ -605,7 +605,10 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/useAuth";
-import { useCreateUserMutation } from "@/redux/features/user/userApi";
+import {
+  useCreateUserMutation,
+  useGetMeQuery,
+} from "@/redux/features/user/userApi";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, Lock, Save, ShieldOff, UserPlus } from "lucide-react";
 import { useState } from "react";
@@ -649,6 +652,8 @@ type AddUserForm = z.infer<typeof addUserSchema>;
 
 const AddUser = () => {
   const { user: currentUser } = useAuth();
+  const { data: me } = useGetMeQuery(undefined);
+  console.log("Current User from useGetMeQuery:", me);
   const [createUser, { isLoading, error: mutationError }] =
     useCreateUserMutation();
   const navigate = useNavigate();
@@ -822,7 +827,7 @@ const AddUser = () => {
                   name="phone"
                   control={control}
                   render={({ field }) => (
-                    <Input id="phone" placeholder="+880XXXXXXXXX" {...field} />
+                    <Input id="phone" placeholder="+8810XXXXXXXXX" {...field} />
                   )}
                 />
                 {errors.phone && (

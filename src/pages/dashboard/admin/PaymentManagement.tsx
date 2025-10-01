@@ -24,10 +24,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { mockPayments, mockUsers, type Payment } from "@/data/mockData";
-import { type RootState } from "@/redux/store";
+// import { type RootState } from "@/redux/store";
 import { DollarSign, Edit, Eye, Plus, Search } from "lucide-react";
 import { useState } from "react";
-import { useSelector } from "react-redux";
+// import { useSelector } from "react-redux";
 // import { useToast } from '@/hooks/use-toast';
 import PaymentForm from "@/components/dashboard/forms/PaymentForm";
 import CommissionRateModal from "@/components/dashboard/modals/CommissionRateModal";
@@ -35,7 +35,7 @@ import PaymentDetailModal from "@/components/dashboard/modals/PaymentDetailModal
 import { toast } from "sonner";
 
 const PaymentManagement = () => {
-  const { user } = useSelector((state: RootState) => state.auth);
+  // const { user } = useSelector((state: RootState) => state.auth);
   // const { toast } = useToast();
   const [payments, setPayments] = useState<Payment[]>(mockPayments);
   const [searchTerm, setSearchTerm] = useState("");

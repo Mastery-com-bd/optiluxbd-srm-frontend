@@ -23,9 +23,18 @@ import { useImageUploadImgbb } from "@/hooks/imagebb/useImageUpload";
 import { useAuth } from "@/hooks/useAuth";
 import { useUpdateMeMutation } from "@/redux/features/auth/authApi";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Camera, Edit3, Mail, MapPin, Phone, User } from "lucide-react";
+import {
+  Camera,
+  Edit3,
+  Mail,
+  MapPin,
+  Phone,
+  User,
+  VerifiedIcon,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
+import { data } from "react-router";
 import { toast } from "sonner";
 import * as z from "zod";
 
@@ -44,7 +53,9 @@ const profileSchema = z.object({
     .min(5, "Address must be at least 5 characters")
     .max(128, "Address cannot exceed 128 characters")
     .optional(),
+
   avatarUrl: z.string().nullable().optional(),
+  employeeId: z.string().min(7).max(12).optional(),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
@@ -64,7 +75,8 @@ const Profile = () => {
       name: "",
       phone: "",
       address: "",
-      avatarUrl: undefined,
+      avatarUrl: null,
+      employeeId: "",
     },
   });
 
@@ -74,7 +86,8 @@ const Profile = () => {
         name: user.profile?.name || "",
         phone: user.profile?.phone || "",
         address: user.profile?.address || "",
-        avatarUrl: user.profile?.avatarUrl || undefined,
+        avatarUrl: user.profile?.avatarUrl || null,
+        employeeId: user.profile?.employeeId || "",
       });
     }
   }, [user, profileForm]);
@@ -106,16 +119,38 @@ const Profile = () => {
     }
   };
 
+  // const onSubmit = async (data: ProfileFormData) => {
+  //   setIsUpdating(true);
+  //   try {
+  //     const profileData = {
+  //       profile: {
+  //         name: data.name,
+  //         phone: data.phone,
+  //         address: data.address,
+  //         avatarUrl: data.avatarUrl,
+  //         employeeId: data.employeeId,
+  //       },
+  //     };
+  //     await updateMe(profileData).unwrap();
+  //     toast.success("Profile updated successfully");
+  //     setIsDialogOpen(false);
+  //     setPreviewUrl(undefined);
+  //   } catch {
+  //     toast.error("Failed to update profile");
+  //   } finally {
+  //     setIsUpdating(false);
+  //   }
+  // };
+
   const onSubmit = async (data: ProfileFormData) => {
     setIsUpdating(true);
     try {
       const profileData = {
-        profile: {
-          name: data.name,
-          phone: data.phone,
-          address: data.address,
-          avatarUrl: data.avatarUrl,
-        },
+        name: data.name,
+        phone: data.phone,
+        address: data.address,
+        avatarUrl: data.avatarUrl,
+        employeeId: data.employeeId,
       };
       await updateMe(profileData).unwrap();
       toast.success("Profile updated successfully");
@@ -127,6 +162,8 @@ const Profile = () => {
       setIsUpdating(false);
     }
   };
+
+  console.log(data);
 
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
@@ -285,6 +322,19 @@ const Profile = () => {
 
                       <FormField
                         control={profileForm.control}
+                        name="employeeId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Employee ID</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={profileForm.control}
                         name="address"
                         render={({ field }) => (
                           <FormItem>
@@ -350,15 +400,25 @@ const Profile = () => {
                 </p>
               </div>
             </div>
-
-            <div>
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <MapPin className="h-4 w-4" />
-                <span className="text-sm font-medium">Address</span>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <MapPin className="h-4 w-4" />
+                  <span className="text-sm font-medium">Address</span>
+                </div>
+                <p className="text-foreground font-medium">
+                  {user.profile?.address || "Not provided"}
+                </p>
               </div>
-              <p className="text-foreground font-medium">
-                {user.profile?.address || "Not provided"}
-              </p>
+              <div>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <VerifiedIcon className="h-4 w-4" />
+                  <span className="text-sm font-medium">Employee ID</span>
+                </div>
+                <p className="text-foreground font-medium">
+                  {user.profile?.employeeId || "Not provided"}
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>

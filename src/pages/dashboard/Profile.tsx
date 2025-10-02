@@ -34,7 +34,6 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import { data } from "react-router";
 import { toast } from "sonner";
 import * as z from "zod";
 
@@ -162,8 +161,6 @@ const Profile = () => {
       setIsUpdating(false);
     }
   };
-
-  console.log(data);
 
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {

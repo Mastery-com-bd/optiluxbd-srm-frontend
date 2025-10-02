@@ -1,3 +1,17 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import ProductForm from "@/components/dashboard/forms/ProductForm";
+import ProductDetailModal from "@/components/dashboard/modals/ProductDetailModal";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,6 +30,14 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import {
   Table,
   TableBody,
   TableCell,
@@ -23,78 +45,61 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { mockProducts, type Product } from "@/data/mockData";
-import { type RootState } from "@/redux/store";
+import { useAuth } from "@/hooks/useAuth";
+import {
+  useDeleteProductMutation,
+  useGetProductsQuery,
+} from "@/redux/features/inventory/inventoryApi";
 import { Edit, Eye, Plus, Search, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { useSelector } from "react-redux";
-// import { useToast } from '@/hooks/use-toast';
-import ProductForm from "@/components/dashboard/forms/ProductForm";
-import ProductDetailModal from "@/components/dashboard/modals/ProductDetailModal";
 import { toast } from "sonner";
 
 const ProductManagement = () => {
-  const { user } = useSelector((state: RootState) => state.auth);
-  //   const { toast } = useToast();
-  const [products, setProducts] = useState<Product[]>(mockProducts);
+  const { user } = useAuth();
+  const { data: productsData, isLoading } = useGetProductsQuery(undefined);
+
+  console.log(productsData);
+
+  const [deleteProduct] = useDeleteProductMutation();
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [viewingProduct, setViewingProduct] = useState<Product | null>(null);
+  const [editingProduct, setEditingProduct] = useState<any | null>(null);
+  const [viewingProduct, setViewingProduct] = useState<any | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  const products = productsData || [];
 
   const filteredProducts = products.filter(
-    (product) =>
+    (product: any) =>
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleAddProduct = (
-    productData: Omit<Product, "id" | "createdAt" | "updatedAt">
-  ) => {
-    const newProduct: Product = {
-      ...productData,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    setProducts([...products, newProduct]);
-    setIsAddModalOpen(false);
-    toast.success("Product has been added successfully.");
-  };
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  const paginatedProducts = filteredProducts.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
-  const handleUpdateProduct = (
-    productData: Omit<Product, "id" | "createdAt" | "updatedAt">
-  ) => {
-    if (!editingProduct) return;
-
-    const updatedProduct: Product = {
-      ...productData,
-      id: editingProduct.id,
-      createdAt: editingProduct.createdAt,
-      updatedAt: new Date().toISOString(),
-    };
-
-    setProducts(
-      products.map((p) => (p.id === editingProduct.id ? updatedProduct : p))
-    );
-    setEditingProduct(null);
-    toast.success("Product has been updated successfully.");
-  };
-
-  const handleDeleteProduct = (productId: string) => {
+  const handleDeleteProduct = async (productId: string) => {
     if (user?.role !== "admin") {
       toast.error("Only admin can delete products.");
       return;
     }
 
-    setProducts(products.filter((p) => p.id !== productId));
-    toast.success("Product has been deleted successfully.");
+    try {
+      await deleteProduct(productId).unwrap();
+      toast.success("Product has been deleted successfully.");
+    } catch {
+      toast.error("Failed to delete product.");
+    }
   };
 
-  const getStockStatus = (currentStock: number, minimumStock: number) => {
-    if (currentStock === 0)
+  const getStockStatus = (quantity: number, minimumStock: number) => {
+    if (quantity === 0)
       return { label: "Out of Stock", variant: "destructive" as const };
-    if (currentStock <= minimumStock)
+    if (quantity <= minimumStock)
       return { label: "Low Stock", variant: "secondary" as const };
     return { label: "In Stock", variant: "default" as const };
   };
@@ -106,6 +111,10 @@ const ProductManagement = () => {
       minimumFractionDigits: 0,
     }).format(amount);
   };
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -129,7 +138,10 @@ const ProductManagement = () => {
               <DialogHeader>
                 <DialogTitle>Add New Product</DialogTitle>
               </DialogHeader>
-              <ProductForm onSubmit={handleAddProduct} />
+              <ProductForm
+                onSubmit={() => setIsAddModalOpen(false)}
+                isAdd={true}
+              />
             </DialogContent>
           </Dialog>
         )}
@@ -156,6 +168,7 @@ const ProductManagement = () => {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>SL No.</TableHead>
                 <TableHead>Image</TableHead>
                 <TableHead>Product</TableHead>
                 <TableHead>Category</TableHead>
@@ -167,13 +180,15 @@ const ProductManagement = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredProducts.map((product) => {
+              {paginatedProducts.map((product: any, index: number) => {
                 const stockStatus = getStockStatus(
-                  product.currentStock,
+                  product.quantity,
                   product.minimumStock
                 );
+                const slNo = (currentPage - 1) * itemsPerPage + index + 1;
                 return (
-                  <TableRow key={product.id}>
+                  <TableRow key={product._id}>
+                    <TableCell>{slNo}</TableCell>
                     <TableCell>
                       {product.imageUrl ? (
                         <img
@@ -203,7 +218,7 @@ const ProductManagement = () => {
                       {formatCurrency(product.sellingPrice)}
                     </TableCell>
                     <TableCell>
-                      {product.currentStock}/{product.minimumStock}
+                      {product.quantity}/{product.minimumStock}
                     </TableCell>
                     <TableCell>
                       <Badge variant={stockStatus.variant}>
@@ -228,15 +243,44 @@ const ProductManagement = () => {
                             <Edit className="h-4 w-4" />
                           </Button>
                         )}
-                        {user?.role === "admin" && (
+                        {/* {user?.role === "admin" && (
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleDeleteProduct(product.id)}
+                            onClick={() => handleDeleteProduct(product._id)}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
-                        )}
+                        )} */}
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="destructive" size="sm">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Are you sure you want to delete this product?
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action cannot be undone. The product{" "}
+                                <span className="font-semibold">
+                                  {product.name}
+                                </span>{" "}
+                                will be permanently removed from the database.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDeleteProduct(product._id)}
+                              >
+                                Yes, Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -244,6 +288,47 @@ const ProductManagement = () => {
               })}
             </TableBody>
           </Table>
+
+          {totalPages > 1 && (
+            <Pagination className="mt-4">
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.max(prev - 1, 1))
+                    }
+                    className={
+                      currentPage === 1 ? "pointer-events-none opacity-50" : ""
+                    }
+                  />
+                </PaginationItem>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                  (page) => (
+                    <PaginationItem key={page}>
+                      <PaginationLink
+                        onClick={() => setCurrentPage(page)}
+                        isActive={currentPage === page}
+                      >
+                        {page}
+                      </PaginationLink>
+                    </PaginationItem>
+                  )
+                )}
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                    }
+                    className={
+                      currentPage === totalPages
+                        ? "pointer-events-none opacity-50"
+                        : ""
+                    }
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          )}
         </CardContent>
       </Card>
 
@@ -259,7 +344,8 @@ const ProductManagement = () => {
           {editingProduct && (
             <ProductForm
               initialData={editingProduct}
-              onSubmit={handleUpdateProduct}
+              onSubmit={() => setEditingProduct(null)}
+              isAdd={false}
             />
           )}
         </DialogContent>

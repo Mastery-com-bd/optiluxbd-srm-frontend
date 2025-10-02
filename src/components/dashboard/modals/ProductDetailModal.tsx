@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -6,10 +7,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import { type Product } from "@/data/mockData";
 
 interface ProductDetailModalProps {
-  product: Product;
+  product: any;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -27,18 +27,15 @@ const ProductDetailModal = ({
     }).format(amount);
   };
 
-  const getStockStatus = (currentStock: number, minimumStock: number) => {
-    if (currentStock === 0)
+  const getStockStatus = (quantity: number, minimumStock: number) => {
+    if (quantity === 0)
       return { label: "Out of Stock", variant: "destructive" as const };
-    if (currentStock <= minimumStock)
+    if (quantity <= minimumStock)
       return { label: "Low Stock", variant: "secondary" as const };
     return { label: "In Stock", variant: "default" as const };
   };
 
-  const stockStatus = getStockStatus(
-    product.currentStock,
-    product.minimumStock
-  );
+  const stockStatus = getStockStatus(product.quantity, product.minimumStock);
   const profitMargin = (
     ((product.sellingPrice - product.costPrice) / product.costPrice) *
     100
@@ -104,9 +101,7 @@ const ProductDetailModal = ({
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Current Stock:</span>
-                  <span className="font-medium">
-                    {product.currentStock} units
-                  </span>
+                  <span className="font-medium">{product.quantity} units</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Minimum Stock:</span>
@@ -121,6 +116,16 @@ const ProductDetailModal = ({
                   </Badge>
                 </div>
               </div>
+            </div>
+          </div>
+
+          <Separator />
+
+          <div className="space-y-4">
+            <h4 className="font-medium">Supplier Information</h4>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Supplier:</span>
+              <span className="font-medium">{product.supplier}</span>
             </div>
           </div>
 

@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+import ReturnForm from "@/components/dashboard/forms/ReturnForm";
+import ReturnDetailModal from "@/components/dashboard/modals/ReturnDetailModal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,19 +33,13 @@ import {
   type Product,
   type ReturnProduct,
 } from "@/data/mockData";
-import { type RootState } from "@/redux/store";
+import { useAuth } from "@/hooks/useAuth";
 import { CheckCircle, Eye, Plus, Search } from "lucide-react";
 import { useState } from "react";
-import { useSelector } from "react-redux";
-// import { useToast } from '@/hooks/use-toast';
-// import ReturnForm from '@/components/dashboard/forms/ReturnForm';
-import ReturnForm from "@/components/dashboard/forms/ReturnForm";
-import ReturnDetailModal from "@/components/dashboard/modals/ReturnDetailModal";
 import { toast } from "sonner";
 
 const ReturnsManagement = () => {
-  const { user } = useSelector((state: RootState) => state.auth);
-  // const { toast } = useToast();
+  const { user } = useAuth();
   const [returns, setReturns] = useState<ReturnProduct[]>(mockReturns);
   const [_products, setProducts] = useState<Product[]>(mockProducts);
   const [searchTerm, setSearchTerm] = useState("");

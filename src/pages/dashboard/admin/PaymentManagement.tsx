@@ -32,10 +32,12 @@ import { useState } from "react";
 import PaymentForm from "@/components/dashboard/forms/PaymentForm";
 import CommissionRateModal from "@/components/dashboard/modals/CommissionRateModal";
 import PaymentDetailModal from "@/components/dashboard/modals/PaymentDetailModal";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
 const PaymentManagement = () => {
   // const { user } = useSelector((state: RootState) => state.auth);
+  const { user } = useAuth();
   // const { toast } = useToast();
   const [payments, setPayments] = useState<Payment[]>(mockPayments);
   const [searchTerm, setSearchTerm] = useState("");

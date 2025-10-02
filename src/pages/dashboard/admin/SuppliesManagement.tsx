@@ -29,17 +29,17 @@ import {
   mockUsers,
   type Supply,
 } from "@/data/mockData";
-import { type RootState } from "@/redux/store";
 import { Eye, Plus, Search } from "lucide-react";
 import { useState } from "react";
-import { useSelector } from "react-redux";
+
 // import { useToast } from '@/hooks/use-toast';
 import SupplyForm from "@/components/dashboard/forms/SupplyForm";
 import SupplyDetailModal from "@/components/dashboard/modals/SupplyDetailModal";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
 const SuppliesManagement = () => {
-  const { user } = useSelector((state: RootState) => state.auth);
+  const { user } = useAuth();
   // const { toast } = useToast();
   const [supplies, setSupplies] = useState<Supply[]>(mockSupplies);
   const [searchTerm, setSearchTerm] = useState("");

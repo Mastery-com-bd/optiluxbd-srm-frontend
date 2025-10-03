@@ -1,3 +1,4 @@
+import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/useAuth";
 import AdminDashboard from "@/pages/dashboard/admin/AdminDashboard";
 import StaffDashboard from "@/pages/dashboard/staff/StaffDashboard";
@@ -10,7 +11,7 @@ const Dashboard = () => {
   const { user } = useAuth();
 
   if (!user) {
-    return <div>Loading...</div>;
+    return <Skeleton />;
   }
 
   switch (user.role) {

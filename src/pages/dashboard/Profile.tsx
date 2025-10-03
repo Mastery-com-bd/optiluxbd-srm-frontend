@@ -18,6 +18,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { useImageUploadImgbb } from "@/hooks/imagebb/useImageUpload";
 import { useAuth } from "@/hooks/useAuth";
@@ -173,7 +174,7 @@ const Profile = () => {
     }
   };
 
-  if (!user) return <p>Loading...</p>;
+  if (!user) return <Skeleton />;
 
   return (
     <div className="space-y-6">

@@ -37,6 +37,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -136,7 +137,7 @@ const ProductManagement = () => {
   };
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <Skeleton />;
   }
 
   return (

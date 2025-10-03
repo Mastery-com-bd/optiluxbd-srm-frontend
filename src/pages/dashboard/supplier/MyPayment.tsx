@@ -14,7 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { mockPayments, mockSupplies } from "@/data/mockData";
-import { type RootState } from "@/redux/store";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Calendar,
   Clock,
@@ -24,7 +24,6 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { useState } from "react";
-import { useSelector } from "react-redux";
 import {
   CartesianGrid,
   Cell,
@@ -39,7 +38,7 @@ import {
 } from "recharts";
 
 const MyPayments = () => {
-  const { user } = useSelector((state: RootState) => state.auth);
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
 
   // Filter payments for current supplier

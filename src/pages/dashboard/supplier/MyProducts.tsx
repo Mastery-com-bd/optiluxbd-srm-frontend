@@ -11,13 +11,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { mockProducts, mockSupplies } from "@/data/mockData";
-import { type RootState } from "@/redux/store";
+import { useAuth } from "@/hooks/useAuth";
 import { Minus, Package, Search, TrendingDown, TrendingUp } from "lucide-react";
 import { useState } from "react";
-import { useSelector } from "react-redux";
 
 const MyProducts = () => {
-  const { user } = useSelector((state: RootState) => state.auth);
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
 
   // Filter products for current supplier

@@ -12,10 +12,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { mockProducts, mockSupplies } from "@/data/mockData";
-import { type RootState } from "@/redux/store";
+import { useAuth } from "@/hooks/useAuth";
 import { Calendar, Clock, Package, Search, TrendingUp } from "lucide-react";
 import { useState } from "react";
-import { useSelector } from "react-redux";
 import {
   CartesianGrid,
   Line,
@@ -27,7 +26,8 @@ import {
 } from "recharts";
 
 const MySupplies = () => {
-  const { user } = useSelector((state: RootState) => state.auth);
+  const { user } = useAuth();
+  // const { user } = useSelector((state: RootState) => state.auth);
   const [searchQuery, setSearchQuery] = useState("");
 
   // Filter supplies for current supplier

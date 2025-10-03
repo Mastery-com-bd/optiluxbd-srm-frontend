@@ -10,9 +10,10 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { mockProducts, mockUsers, type ReturnProduct } from "@/data/mockData";
-import { type RootState } from "@/redux/store";
+import { useAuth } from "@/hooks/useAuth";
+// import { type RootState } from "@/redux/store";
 import { useState } from "react";
-import { useSelector } from "react-redux";
+// import { useSelector } from "react-redux";
 
 interface ReturnFormProps {
   onSubmit: (
@@ -21,7 +22,8 @@ interface ReturnFormProps {
 }
 
 const ReturnForm = ({ onSubmit }: ReturnFormProps) => {
-  const { user } = useSelector((state: RootState) => state.auth);
+  // const { user } = useSelector((state: RootState) => state.auth);
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     productId: "",
     staffId: user?.role === "staff" ? user._id : "",

@@ -31,20 +31,14 @@ import { ThemeToggle } from "./ThemeToggle";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  // const { theme, setTheme } = useTheme();
   const { user } = useAuth();
   const [logout] = useLogoutMutation();
-
   const navigate = useNavigate();
 
   const handleLogout = async () => {
     await logout({}).unwrap();
-    navigate("/");
+    navigate("/login");
   };
-
-  // const toggleTheme = () => {
-  //   setTheme(theme === "light" ? "dark" : "light");
-  // };
 
   const getNavItems = (): Array<{
     name: string;

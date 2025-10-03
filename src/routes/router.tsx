@@ -36,7 +36,7 @@ const router = createBrowserRouter([
       { path: "verify-email", element: <VerifyEmail /> },
       { path: "forgot-password", element: <ForgotPassword /> },
       { path: "reset-password", element: <ResetPassword /> },
-      { path: "pending-approval", element: <PendingApproval /> },
+      // { path: "pending-approval", element: <PendingApproval /> },
     ],
   },
 
@@ -97,6 +97,7 @@ const router = createBrowserRouter([
     ],
   },
   // Catch-all route for 404 Not Found
+  { path: "pending-approval", element: <PendingApproval /> },
   {
     path: "*",
     element: <NotFound />,

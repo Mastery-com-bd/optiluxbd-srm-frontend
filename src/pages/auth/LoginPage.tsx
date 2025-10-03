@@ -34,11 +34,11 @@ const LoginPage = () => {
 
       console.log("user after login:", response);
 
-      if (status === "pending" || !isEmailVerified) {
+      if (status === "pending" || status === "blocked" || !isEmailVerified) {
         navigate("/pending-approval");
       } else {
         toast.success("Login successful");
-        navigate("/dashboard");
+        navigate("/");
       }
     } catch (error) {
       toast.error("Login failed. Please check your credentials.");

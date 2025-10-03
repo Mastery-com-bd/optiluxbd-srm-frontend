@@ -7,16 +7,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useLogoutMutation } from "@/redux/features/auth/authApi";
 import { AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router";
+// import { toast } from "sonner";
 
 const PendingApproval = () => {
+  const [logout] = useLogoutMutation();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    // Assuming you have a logout function
-    // useLogoutMutation or similar
+  const handleLogout = async () => {
     navigate("/login");
+    await logout({}).unwrap();
   };
 
   return (

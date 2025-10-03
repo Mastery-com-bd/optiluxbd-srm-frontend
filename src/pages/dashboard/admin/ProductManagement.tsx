@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { SkeletonLoader } from "@/components/common/SkeletonLoader";
 import ProductForm from "@/components/dashboard/forms/ProductForm";
 import ProductDetailModal from "@/components/dashboard/modals/ProductDetailModal";
 import {
@@ -37,7 +38,6 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -137,7 +137,7 @@ const ProductManagement = () => {
   };
 
   if (isLoading) {
-    return <Skeleton />;
+    return <SkeletonLoader />;
   }
 
   return (

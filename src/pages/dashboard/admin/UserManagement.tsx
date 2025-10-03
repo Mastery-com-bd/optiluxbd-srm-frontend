@@ -266,6 +266,7 @@
 
 // export default UserManagement;
 
+import { SkeletonLoader } from "@/components/common/SkeletonLoader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -291,7 +292,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -421,7 +421,7 @@ const UserManagement = () => {
   }
 
   if (isLoading) {
-    return <Skeleton />;
+    return <SkeletonLoader />;
   }
 
   return (

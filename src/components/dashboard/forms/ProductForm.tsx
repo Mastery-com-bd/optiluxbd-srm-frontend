@@ -37,9 +37,15 @@ const productSchema = z.object({
 
 type ProductFormData = z.infer<typeof productSchema>;
 
+// interface ProductFormProps {
+//   initialData?: any;
+//   onSubmit: () => void;
+//   isAdd: boolean;
+// }
+
 interface ProductFormProps {
   initialData?: any;
-  onSubmit: () => void;
+  onSubmit: (data?: any) => void | Promise<void>;
   isAdd: boolean;
 }
 

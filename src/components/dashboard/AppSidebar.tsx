@@ -31,7 +31,7 @@ import { Link, NavLink, useLocation } from "react-router";
 const adminItems = [
   { title: "Overview", url: "/dashboard", icon: LayoutDashboard },
   { title: "User Management", url: "/dashboard/user-management", icon: Users },
-  { title: "Products", url: "/dashboard/products-management", icon: Package },
+  { title: "Inventory", url: "/dashboard/products-management", icon: Package },
   {
     title: "Suppliers",
     url: "/dashboard/suppliers-management",
@@ -48,7 +48,8 @@ const adminItems = [
 
 const staffItems = [
   { title: "Overview", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Inventory", url: "/dashboard/inventory-management", icon: Boxes },
+  // { title: "Inventory", url: "/dashboard/inventory-management", icon: Boxes },
+  { title: "Inventory", url: "/dashboard/products-management", icon: Boxes },
   { title: "Returns", url: "/dashboard/returns-management", icon: RotateCcw },
 ];
 

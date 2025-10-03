@@ -71,7 +71,7 @@ const router = createBrowserRouter([
             element: <ReturnsManagement />,
           },
           {
-            path: "dashboard/inventory",
+            path: "dashboard/inventory-management",
             element: <InventoryManagement />,
           },
           {

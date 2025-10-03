@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
+  // CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -50,7 +50,15 @@ import {
   useDeleteProductMutation,
   useGetProductsQuery,
 } from "@/redux/features/inventory/inventoryApi";
-import { Edit, Eye, Plus, Search, Trash2 } from "lucide-react";
+import {
+  AlertTriangle,
+  Edit,
+  Eye,
+  Package,
+  Plus,
+  Search,
+  Trash2,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -61,7 +69,8 @@ const ProductManagement = () => {
   console.log(productsData);
 
   const [deleteProduct] = useDeleteProductMutation();
-  const [searchTerm, setSearchTerm] = useState("");
+  // const [searchTerm, setSearchTerm] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any | null>(null);
   const [viewingProduct, setViewingProduct] = useState<any | null>(null);
@@ -70,10 +79,20 @@ const ProductManagement = () => {
 
   const products = productsData || [];
 
+  // const filteredProducts = products.filter(
+  //   (product: any) =>
+  //     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  //     product.category.toLowerCase().includes(searchTerm.toLowerCase())
+  // );
+
   const filteredProducts = products.filter(
     (product: any) =>
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.category.toLowerCase().includes(searchTerm.toLowerCase())
+      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.category.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const lowStockProducts = filteredProducts.filter(
+    (product: any) => product.quantity <= product.minimumStock
   );
 
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
@@ -96,11 +115,15 @@ const ProductManagement = () => {
     }
   };
 
+  const handleEdit = (product: any) => {
+    setEditingProduct(product);
+  };
+
   const getStockStatus = (quantity: number, minimumStock: number) => {
     if (quantity === 0)
       return { label: "Out of Stock", variant: "destructive" as const };
     if (quantity <= minimumStock)
-      return { label: "Low Stock", variant: "secondary" as const };
+      return { label: "Low Stock", variant: "destructive" as const };
     return { label: "In Stock", variant: "default" as const };
   };
 
@@ -119,10 +142,20 @@ const ProductManagement = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <div>
+        {/* <div>
           <h1 className="text-2xl font-bold">Product Management</h1>
           <p className="text-muted-foreground">
             Manage your inventory products
+          </p>
+        </div> */}
+
+        {/* Header */}
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">
+            Inventory Management
+          </h1>
+          <p className="text-muted-foreground">
+            Manage products and stock levels
           </p>
         </div>
 
@@ -147,8 +180,64 @@ const ProductManagement = () => {
         )}
       </div>
 
+      {/* Low Stock Alert */}
+      {lowStockProducts.length > 0 && (
+        <Card className="border-warning bg-warning/5">
+          <CardHeader>
+            <CardTitle className="flex items-center text-warning">
+              <AlertTriangle className="h-5 w-5 mr-2" />
+              Low Stock Alert ({lowStockProducts.length} items)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {lowStockProducts.map((product: any) => (
+                <div
+                  key={product._id}
+                  className="flex items-center justify-between p-3 bg-muted/30 rounded-lg"
+                >
+                  <div className="flex items-center space-x-3">
+                    <Package className="h-4 w-4 text-warning" />
+                    <div>
+                      <p className="font-medium text-sm">{product.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Stock: {product.quantity}
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleEdit(product)}
+                  >
+                    Update
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Search and Filters */}
       <Card>
-        <CardHeader>
+        <CardContent className="p-6">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search products..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        {/* <CardHeader>
           <CardTitle>Products</CardTitle>
           <CardDescription>
             Total products: {products.length} | Showing:{" "}
@@ -163,7 +252,7 @@ const ProductManagement = () => {
               className="max-w-sm"
             />
           </div>
-        </CardHeader>
+        </CardHeader> */}
         <CardContent>
           <Table>
             <TableHeader>
@@ -254,9 +343,11 @@ const ProductManagement = () => {
                         )} */}
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button variant="destructive" size="sm">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            {user?.role !== "staff" && (
+                              <Button variant="destructive" size="sm">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>

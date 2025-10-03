@@ -29,6 +29,7 @@ import { DollarSign, Edit, Eye, Plus, Search } from "lucide-react";
 import { useState } from "react";
 // import { useSelector } from "react-redux";
 // import { useToast } from '@/hooks/use-toast';
+import PreventAccessRoutes from "@/components/common/PreventAccessRoutes";
 import PaymentForm from "@/components/dashboard/forms/PaymentForm";
 import CommissionRateModal from "@/components/dashboard/modals/CommissionRateModal";
 import PaymentDetailModal from "@/components/dashboard/modals/PaymentDetailModal";
@@ -117,6 +118,10 @@ const PaymentManagement = () => {
     user?.role === "supplier"
       ? filteredPayments.filter((payment) => payment.supplierId === user._id)
       : filteredPayments;
+
+  if (user?.role !== "admin") {
+    return <PreventAccessRoutes />;
+  }
 
   return (
     <div className="space-y-6">

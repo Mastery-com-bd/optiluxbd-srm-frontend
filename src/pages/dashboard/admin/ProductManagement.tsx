@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import PreventAccessRoutes from "@/components/common/PreventAccessRoutes";
 import { SkeletonLoader } from "@/components/common/SkeletonLoader";
 import ProductForm from "@/components/dashboard/forms/ProductForm";
 import ProductDetailModal from "@/components/dashboard/modals/ProductDetailModal";
@@ -135,6 +136,10 @@ const ProductManagement = () => {
       minimumFractionDigits: 0,
     }).format(amount);
   };
+
+  if (user?.role !== "admin" && user?.role !== "staff") {
+    return <PreventAccessRoutes />;
+  }
 
   if (isLoading) {
     return <SkeletonLoader />;

@@ -33,6 +33,7 @@ import { Eye, Plus, Search } from "lucide-react";
 import { useState } from "react";
 
 // import { useToast } from '@/hooks/use-toast';
+import PreventAccessRoutes from "@/components/common/PreventAccessRoutes";
 import SupplyForm from "@/components/dashboard/forms/SupplyForm";
 import SupplyDetailModal from "@/components/dashboard/modals/SupplyDetailModal";
 import { useAuth } from "@/hooks/useAuth";
@@ -105,6 +106,10 @@ const SuppliesManagement = () => {
     user?.role === "supplier"
       ? filteredSupplies.filter((supply) => supply.supplierId === user._id)
       : filteredSupplies;
+
+  if (user?.role !== "admin") {
+    return <PreventAccessRoutes />;
+  }
 
   return (
     <div className="space-y-6">

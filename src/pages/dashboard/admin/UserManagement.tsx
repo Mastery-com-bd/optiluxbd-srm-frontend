@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import PreventAccessRoutes from "@/components/common/PreventAccessRoutes";
 import { SkeletonLoader } from "@/components/common/SkeletonLoader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -129,7 +130,7 @@ const UserManagement = () => {
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
-      case "active":
+      case "approved":
         return "default";
       case "blocked":
         return "destructive";
@@ -141,17 +142,7 @@ const UserManagement = () => {
   };
 
   if (currentUser?.role !== "admin") {
-    return (
-      <div className="flex items-center justify-center h-[400px]">
-        <div className="text-center">
-          <ShieldOff className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold">Access Denied</h3>
-          <p className="text-muted-foreground">
-            You don't have permission to access this page.
-          </p>
-        </div>
-      </div>
-    );
+    return <PreventAccessRoutes />;
   }
 
   if (isLoading) {

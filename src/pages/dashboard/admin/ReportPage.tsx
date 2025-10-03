@@ -1,3 +1,4 @@
+import PreventAccessRoutes from "@/components/common/PreventAccessRoutes";
 import {
   Card,
   CardContent,
@@ -6,6 +7,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { chartData, mockReportsData } from "@/data/mockData";
+import Cookies from "js-cookie";
 import {
   Bar,
   BarChart,
@@ -19,6 +21,10 @@ import {
 } from "recharts";
 
 const ReportsPage = () => {
+  // const { user } = useAuth();
+
+  const userRole = Cookies.get("role");
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-BD", {
       style: "currency",
@@ -26,6 +32,10 @@ const ReportsPage = () => {
       minimumFractionDigits: 0,
     }).format(amount);
   };
+
+  if (userRole !== "admin") {
+    return <PreventAccessRoutes />;
+  }
 
   return (
     <div className="space-y-6">

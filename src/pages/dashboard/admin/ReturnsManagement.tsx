@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import PreventAccessRoutes from "@/components/common/PreventAccessRoutes";
 import { SkeletonLoader } from "@/components/common/SkeletonLoader";
 import ReturnForm from "@/components/dashboard/forms/ReturnForm";
 import ReturnDetailModal from "@/components/dashboard/modals/ReturnDetailModal";
@@ -142,6 +143,9 @@ const ReturnsManagement = () => {
           (returnItem: any) => returnItem.staffId._id === user._id
         )
       : filteredReturns;
+  if (user?.role !== "admin" && user?.role !== "staff") {
+    return <PreventAccessRoutes />;
+  }
 
   if (returnsLoading) {
     return <SkeletonLoader />;

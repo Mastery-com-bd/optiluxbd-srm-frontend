@@ -1,4 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { SkeletonLoader } from "@/components/common/SkeletonLoader";
 import ReturnForm from "@/components/dashboard/forms/ReturnForm";
 import ReturnDetailModal from "@/components/dashboard/modals/ReturnDetailModal";
 import { Badge } from "@/components/ui/badge";
@@ -26,127 +27,125 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  mockProducts,
-  mockReturns,
-  mockUsers,
-  type Product,
-  type ReturnProduct,
-} from "@/data/mockData";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  // useGetProductsQuery,
+  useUpdateStockMutation,
+} from "@/redux/features/inventory/inventoryApi";
+import {
+  useCreateReturnMutation,
+  useGetReturnsQuery,
+  useUpdateReturnMutation,
+} from "@/redux/features/returns/returnApi"; // Assume returnApi.ts import
+// import { useGetAllUsersQuery } from "@/redux/features/user/userApi";
 import { CheckCircle, Eye, Plus, Search } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
 const ReturnsManagement = () => {
   const { user } = useAuth();
-  const [returns, setReturns] = useState<ReturnProduct[]>(mockReturns);
-  const [_products, setProducts] = useState<Product[]>(mockProducts);
+  const { data: returnsData, isLoading: returnsLoading } =
+    useGetReturnsQuery(undefined);
+  const [createReturn] = useCreateReturnMutation();
+  const [updateReturn] = useUpdateReturnMutation();
+  const [updateStock] = useUpdateStockMutation();
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [viewingReturn, setViewingReturn] = useState<ReturnProduct | null>(
-    null
-  );
+  const [viewingReturn, setViewingReturn] = useState<any | null>(null);
 
-  const filteredReturns = returns.filter((returnItem) => {
-    const product = mockProducts.find((p) => p.id === returnItem.productId);
-    const staff = mockUsers.find((u) => u._id === returnItem.staffId);
+  const returns = returnsData || [];
+
+  const filteredReturns = returns.filter((returnItem: any) => {
+    const productName = returnItem.productId.name.toLowerCase();
+    const staffName = returnItem.staffId.profile.name.toLowerCase();
     return (
-      product?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      staff?.profile.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      productName.includes(searchTerm.toLowerCase()) ||
+      staffName.includes(searchTerm.toLowerCase()) ||
       returnItem.reason.toLowerCase().includes(searchTerm.toLowerCase())
     );
   });
 
-  const handleAddReturn = (
-    returnData: Omit<ReturnProduct, "id" | "createdAt" | "updatedAt">
-  ) => {
-    const newReturn: ReturnProduct = {
-      ...returnData,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    setReturns([...returns, newReturn]);
-
-    // Automatically add returned products back to stock
-    if (newReturn.status === "processed") {
-      addToStock(newReturn.productId, newReturn.quantity);
+  const handleAddReturn = async (returnData: any) => {
+    try {
+      const newReturn = await createReturn(returnData).unwrap();
+      if (returnData.status === "processing") {
+        await addToStock(returnData.productId, returnData.quantity);
+      }
+      setIsAddModalOpen(false);
+      toast.success(
+        `Return has been added and ${
+          returnData.status === "processing"
+            ? "stock updated"
+            : "is pending processing"
+        }`
+      );
+      return newReturn;
+    } catch {
+      toast.error("Failed to add return.");
     }
-
-    setIsAddModalOpen(false);
-    toast.success(
-      `Return has been added and ${
-        newReturn.status === "processed"
-          ? "stock updated"
-          : "is pending processing"
-      }`
-    );
   };
 
-  const addToStock = (productId: string, quantity: number) => {
-    setProducts((prevProducts) =>
-      prevProducts.map((product) =>
-        product.id === productId
-          ? { ...product, currentStock: product.currentStock + quantity }
-          : product
-      )
-    );
+  const addToStock = async (productId: string, quantity: number) => {
+    try {
+      await updateStock({ id: productId, quantity }).unwrap(); // Assume body { quantity } adds to stock
+    } catch {
+      toast.error("Failed to update stock.");
+    }
   };
 
-  const handleProcessReturn = (returnId: string) => {
-    const returnItem = returns.find((r) => r.id === returnId);
+  const handleProcessReturn = async (returnId: string) => {
+    const returnItem = filteredReturns.find((r: any) => r._id === returnId);
     if (!returnItem) return;
 
-    if (returnItem.status === "processed") {
-      toast.error("This return has already been processed.");
+    if (returnItem.status === "processing") {
+      toast.error("This return has already been processing.");
       return;
     }
 
-    // Update return status
-    setReturns((prevReturns) =>
-      prevReturns.map((r) =>
-        r.id === returnId
-          ? { ...r, status: "processed", updatedAt: new Date().toISOString() }
-          : r
-      )
-    );
-
-    // Add to stock
-    addToStock(returnItem.productId, returnItem.quantity);
-
-    toast.success("Return has been processed and stock has been updated.");
+    try {
+      await updateReturn({ id: returnId, status: "processing" }).unwrap();
+      await addToStock(returnItem.productId._id, returnItem.quantity);
+      toast.success("Return has been processing and stock has been updated.");
+    } catch {
+      toast.error("Failed to process return.");
+    }
   };
 
-  const getStatusBadge = (status: ReturnProduct["status"]) => {
-    const variants = {
-      pending: "secondary" as const,
-      processed: "default" as const,
-      cancelled: "destructive" as const,
+  const getStatusBadge = (status: string) => {
+    const variants: {
+      [key: string]: "default" | "secondary" | "destructive" | "outline";
+    } = {
+      pending: "secondary",
+      processing: "default",
+      cancelled: "destructive",
+      completed: "outline",
     };
     return (
-      <Badge variant={variants[status]}>
+      <Badge variant={variants[status] || "outline"}>
         {status.charAt(0).toUpperCase() + status.slice(1)}
       </Badge>
     );
   };
 
-  const getProductName = (productId: string) => {
-    const product = mockProducts.find((p) => p.id === productId);
-    return product?.name || "Unknown Product";
+  const getProductName = (productId: any) => {
+    return productId.name || "Unknown Product";
   };
 
-  const getStaffName = (staffId: string) => {
-    const staff = mockUsers.find((u) => u._id === staffId);
-    return staff?.profile.name || "Unknown Staff";
+  const getStaffName = (staffId: any) => {
+    return staffId.profile.name || "Unknown Staff";
   };
 
   // Filter returns based on user role
   const displayReturns =
     user?.role === "staff"
-      ? filteredReturns.filter((returnItem) => returnItem.staffId === user._id)
+      ? filteredReturns.filter(
+          (returnItem: any) => returnItem.staffId._id === user._id
+        )
       : filteredReturns;
+
+  if (returnsLoading) {
+    return <SkeletonLoader />;
+  }
 
   return (
     <div className="space-y-6">
@@ -190,11 +189,11 @@ const ReturnsManagement = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Processed</CardTitle>
+            <CardTitle className="text-sm font-medium">processing</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {returns.filter((r) => r.status === "processed").length}
+              {returns.filter((r: any) => r.status === "processing").length}
             </div>
           </CardContent>
         </Card>
@@ -205,7 +204,7 @@ const ReturnsManagement = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-600">
-              {returns.filter((r) => r.status === "pending").length}
+              {returns.filter((r: any) => r.status === "pending").length}
             </div>
           </CardContent>
         </Card>
@@ -218,7 +217,7 @@ const ReturnsManagement = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {returns.reduce((sum, r) => sum + r.quantity, 0)}
+              {returns.reduce((sum: number, r: any) => sum + r.quantity, 0)}
             </div>
           </CardContent>
         </Card>
@@ -254,8 +253,8 @@ const ReturnsManagement = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {displayReturns.map((returnItem) => (
-                <TableRow key={returnItem.id}>
+              {displayReturns.map((returnItem: any) => (
+                <TableRow key={returnItem._id}>
                   <TableCell className="font-medium">
                     {getProductName(returnItem.productId)}
                   </TableCell>
@@ -282,7 +281,7 @@ const ReturnsManagement = () => {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleProcessReturn(returnItem.id)}
+                            onClick={() => handleProcessReturn(returnItem._id)}
                           >
                             <CheckCircle className="h-4 w-4" />
                           </Button>

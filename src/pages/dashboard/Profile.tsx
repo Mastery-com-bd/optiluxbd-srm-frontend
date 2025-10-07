@@ -318,19 +318,22 @@ const Profile = () => {
                         )}
                       />
 
-                      <FormField
-                        control={profileForm.control}
-                        name="employeeId"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Employee ID</FormLabel>
-                            <FormControl>
-                              <Input {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                      {user.role === "admin" || user.role === "staff" ? (
+                        <FormField
+                          control={profileForm.control}
+                          name="employeeId"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Employee ID</FormLabel>
+                              <FormControl>
+                                <Input {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      ) : null}
+
                       <FormField
                         control={profileForm.control}
                         name="address"
@@ -414,7 +417,9 @@ const Profile = () => {
                   <span className="text-sm font-medium">Employee ID</span>
                 </div>
                 <p className="text-foreground font-medium">
-                  {user.profile?.employeeId || "Not provided"}
+                  {user.role === "admin" || user.role === "staff"
+                    ? user.profile?.employeeId
+                    : "Not Applicable"}
                 </p>
               </div>
             </div>

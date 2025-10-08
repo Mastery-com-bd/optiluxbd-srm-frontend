@@ -187,7 +187,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import { useGetSuppliersQuery } from "@/redux/features/supplier/supplierApi"; // Assume supplyApi import
 
 interface PaymentDetailModalProps {
   payment: any;
@@ -200,9 +199,6 @@ const PaymentDetailModal = ({
   isOpen,
   onClose,
 }: PaymentDetailModalProps) => {
-  const { data: suppliesData } = useGetSuppliersQuery(undefined);
-  const supplies = suppliesData?.data || [];
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-BD", {
       style: "currency",
@@ -212,24 +208,19 @@ const PaymentDetailModal = ({
   };
 
   const variants = {
-    pending: "secondary",
-    completed: "default",
-    partial: "secondary",
+    pending: "secondary" as const,
+    completed: "default" as const,
+    partial: "secondary" as const,
   } as const;
+
   type PaymentStatus = keyof typeof variants;
 
   const getStatusBadge = (status: PaymentStatus) => {
-    const variant = variants[status];
-    return (
-      <Badge variant={variant}>
-        {status.charAt(0).toUpperCase() + status.slice(1)}
-      </Badge>
-    );
+    const variant = variants[status] ?? variants.completed;
+    const label =
+      String(status).charAt(0).toUpperCase() + String(status).slice(1);
+    return <Badge variant={variant}>{label}</Badge>;
   };
-
-  const relatedSupplies = supplies.filter((s: any) =>
-    payment.supplyIds.includes(s._id)
-  );
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -258,20 +249,19 @@ const PaymentDetailModal = ({
                 <div>
                   <span className="text-muted-foreground">Name:</span>
                   <p className="font-medium">
-                    {payment.supplierName || "Unknown Supplier"}{" "}
-                    {/* Assume populated */}
+                    {payment.supplier.profile.name || "Unknown Supplier"}
                   </p>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Email:</span>
                   <p className="font-medium">
-                    {payment.supplierEmail || "N/A"}
+                    {payment.supplier.email || "N/A"}
                   </p>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Phone:</span>
                   <p className="font-medium">
-                    {payment.supplierPhone || "N/A"}
+                    {payment.supplier.profile.phone || "N/A"}
                   </p>
                 </div>
               </div>
@@ -312,10 +302,10 @@ const PaymentDetailModal = ({
 
           <div className="space-y-4">
             <h4 className="font-medium">
-              Related Supplies ({relatedSupplies.length})
+              Related Supplies ({payment.supplies.length})
             </h4>
             <div className="space-y-2">
-              {relatedSupplies.map((supply: any) => (
+              {payment.supplies.map((supply: any) => (
                 <div
                   key={supply._id}
                   className="flex justify-between items-center p-3 bg-muted/50 rounded-lg"
@@ -323,8 +313,12 @@ const PaymentDetailModal = ({
                   <div>
                     <p className="font-medium">Supply #{supply._id}</p>
                     <p className="text-sm text-muted-foreground">
-                      Quantity: {supply.quantity} | Commission:{" "}
-                      {supply.commissionRate}%
+                      Quantity:{" "}
+                      {supply.products.reduce(
+                        (sum: number, p: any) => sum + p.quantity,
+                        0
+                      )}{" "}
+                      | Commission: {supply.commissionRate}%
                     </p>
                   </div>
                   <div className="text-right">

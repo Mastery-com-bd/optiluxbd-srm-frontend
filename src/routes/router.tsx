@@ -7,6 +7,7 @@ import RegisterPage from "@/pages/auth/RegisterPage";
 import ResetPassword from "@/pages/auth/ResetPassword";
 import VerifyEmail from "@/pages/auth/VerifyEmail";
 import AddUser from "@/pages/dashboard/admin/AddUser";
+import CommissionRatePage from "@/pages/dashboard/admin/ComssionRatePage";
 import PaymentManagement from "@/pages/dashboard/admin/PaymentManagement";
 import ProductManagement from "@/pages/dashboard/admin/ProductManagement";
 import ReportsPage from "@/pages/dashboard/admin/ReportPage";
@@ -73,6 +74,10 @@ const router = createBrowserRouter([
           {
             path: "dashboard/inventory-management",
             element: <InventoryManagement />,
+          },
+          {
+            path: "dashboard/commission-rate",
+            element: <CommissionRatePage />,
           },
           {
             path: "dashboard/my-payments",

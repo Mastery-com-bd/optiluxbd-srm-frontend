@@ -17,7 +17,6 @@ import UserManagement from "@/pages/dashboard/admin/UserManagement";
 import Dashboard from "@/pages/dashboard/Dashboard";
 import Profile from "@/pages/dashboard/Profile";
 import Settings from "@/pages/dashboard/Settings";
-import InventoryManagement from "@/pages/dashboard/staff/InventoryManagement";
 import MyPayments from "@/pages/dashboard/supplier/MyPayment";
 import MyProducts from "@/pages/dashboard/supplier/MyProducts";
 import MySupplies from "@/pages/dashboard/supplier/MySupplies";
@@ -70,10 +69,6 @@ const router = createBrowserRouter([
           {
             path: "dashboard/returns-management",
             element: <ReturnsManagement />,
-          },
-          {
-            path: "dashboard/inventory-management",
-            element: <InventoryManagement />,
           },
           {
             path: "dashboard/commission-rate",

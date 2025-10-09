@@ -735,10 +735,12 @@ import {
 import { useGetAllUsersQuery } from "@/redux/features/user/userApi";
 import { DollarSign, Eye, Plus, Search } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router";
 import { toast } from "sonner";
 
 const PaymentManagement = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const {
     data: paymentsData,
     isLoading,
@@ -895,6 +897,13 @@ const PaymentManagement = () => {
               >
                 <DollarSign className="h-4 w-4 mr-2" />
                 Commission Rates
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => navigate("/dashboard/commission-rate")}
+              >
+                <DollarSign className="h-4 w-4 mr-2" />
+                Go TO Commission Rates
               </Button>
               <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
                 <DialogTrigger asChild>

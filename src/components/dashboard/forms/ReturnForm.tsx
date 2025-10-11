@@ -564,9 +564,9 @@ const ReturnForm = ({
   );
 
   const returnReasons = [
-    "Defective units",
-    "Damaged during shipping",
+    "Lost and Damaged",
     "Wrong product received",
+    "Partial Delivery",
     "Customer complaint",
     "Quality issues",
     "Expired product",

@@ -1,3 +1,5 @@
+"use client";
+
 import StatsCard from "@/components/dashboard/StatsCard";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,72 +12,86 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { mockProducts, mockSupplies } from "@/data/mockData";
 import { useAuth } from "@/hooks/useAuth";
 import { Minus, Package, Search, TrendingDown, TrendingUp } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
+import { useGetSupplierProductsQuery } from "@/redux/features/supplier/supplierApi";
+
+// ==================== Types ====================
+
+interface Product {
+  _id: string;
+  name: string;
+  description: string;
+  category: string;
+  sellingPrice: number;
+  quantity: number;
+  minimumStock: number;
+  costPrice: number;
+}
+
+interface User {
+  _id: string;
+}
+
+interface AuthState {
+  user: User | null;
+}
+
+type StockTrend = "high" | "medium" | "low";
+
+// ==================== Component ====================
 
 const MyProducts = () => {
-  const { user } = useAuth();
-  const [searchQuery, setSearchQuery] = useState("");
+  const { user } = useAuth() as AuthState;
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
-  // Filter products for current supplier
-  const mySupplies = mockSupplies.filter(
-    (supply) => supply.supplierId === user?._id
-  );
-  const myProductIds = [
-    ...new Set(mySupplies.map((supply) => supply.productId)),
-  ];
-  const myProducts = mockProducts.filter((product) =>
-    myProductIds.includes(product.id)
-  );
+  const {
+    data: products = [],
+    isLoading,
+    isError,
+  } = useGetSupplierProductsQuery(user?._id, {
+    skip: !user?._id,
+  });
 
-  const filteredProducts = myProducts.filter(
-    (product) =>
+  if (isLoading) {
+    return (
+      <div className="p-10 space-y-4">
+        <Card className="h-10 w-48 animate-pulse" />
+        <Card className="h-6 w-full animate-pulse" />
+        <Card className="h-64 w-full animate-pulse" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    toast.error("Failed to load products");
+    return (
+      <div className="text-center py-10 text-red-500">
+        Error loading products
+      </div>
+    );
+  }
+
+  const filteredProducts: Product[] = products.filter(
+    (product: Product) =>
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.category.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Calculate stats
-  const totalProducts = myProducts.length;
-  const totalValue = myProducts.reduce(
-    (sum, product) => sum + product.sellingPrice * product.currentStock,
-    0
-  );
-  const lowStockCount = myProducts.filter(
-    (product) => product.currentStock <= product.minimumStock
+  const totalProducts = products.length;
+  const lowStockCount = products.filter(
+    (product: Product) => product.quantity <= product.minimumStock
   ).length;
 
-  const getProductStats = (productId: string) => {
-    const productSupplies = mySupplies.filter(
-      (supply) => supply.productId === productId
-    );
-    const totalSupplied = productSupplies.reduce(
-      (sum, supply) => sum + supply.quantity,
-      0
-    );
-    const totalEarnings = productSupplies.reduce(
-      (sum, supply) => sum + supply.totalAmount,
-      0
-    );
-    const avgCommission =
-      productSupplies.length > 0
-        ? productSupplies.reduce(
-            (sum, supply) => sum + supply.commissionRate,
-            0
-          ) / productSupplies.length
-        : 0;
-
-    return { totalSupplied, totalEarnings, avgCommission };
-  };
-
-  const getStockTrend = (currentStock: number, minimumStock: number) => {
+  const getStockTrend = (currentStock: number, minimumStock: number): StockTrend => {
     if (currentStock > minimumStock * 2) return "high";
     if (currentStock > minimumStock) return "medium";
     return "low";
   };
 
-  const getTrendIcon = (trend: string) => {
+  const getTrendIcon = (trend: StockTrend) => {
     switch (trend) {
       case "high":
         return <TrendingUp className="h-4 w-4 text-success" />;
@@ -86,7 +102,7 @@ const MyProducts = () => {
     }
   };
 
-  const getTrendColor = (trend: string) => {
+  const getTrendColor = (trend: StockTrend): string => {
     switch (trend) {
       case "high":
         return "bg-success/10 text-success";
@@ -108,20 +124,13 @@ const MyProducts = () => {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <StatsCard
           title="Total Products"
           value={totalProducts}
-          change={`${mySupplies.length} supplies made`}
+          change={`${totalProducts} products`}
           changeType="neutral"
           icon={Package}
-        />
-        <StatsCard
-          title="Portfolio Value"
-          value={`৳${(totalValue / 100000).toFixed(1)}L`}
-          change="Current market value"
-          changeType="positive"
-          icon={TrendingUp}
         />
         <StatsCard
           title="Low Stock Items"
@@ -159,24 +168,17 @@ const MyProducts = () => {
                 <TableRow>
                   <TableHead>Product</TableHead>
                   <TableHead>Category</TableHead>
-                  <TableHead>Current Price</TableHead>
-                  <TableHead>Stock Level</TableHead>
-                  <TableHead>Total Supplied</TableHead>
-                  <TableHead>Total Earnings</TableHead>
-                  <TableHead>Avg Commission</TableHead>
+                  <TableHead>Sale Price</TableHead>
+                  <TableHead>Cost Price</TableHead>
+                  <TableHead>Stock</TableHead>
                   <TableHead>Trend</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredProducts.map((product) => {
-                  const stats = getProductStats(product.id);
-                  const trend = getStockTrend(
-                    product.currentStock,
-                    product.minimumStock
-                  );
-
+                {filteredProducts.map((product: Product) => {
+                  const trend = getStockTrend(product.quantity, product.minimumStock);
                   return (
-                    <TableRow key={product.id}>
+                    <TableRow key={product._id}>
                       <TableCell>
                         <div>
                           <p className="font-medium">{product.name}</p>
@@ -188,27 +190,15 @@ const MyProducts = () => {
                       <TableCell>
                         <Badge variant="outline">{product.category}</Badge>
                       </TableCell>
-                      <TableCell>
-                        ৳{product.sellingPrice.toLocaleString()}
-                      </TableCell>
+                      <TableCell>৳{product.sellingPrice.toLocaleString()}</TableCell>
+                      <TableCell>৳{product.costPrice.toLocaleString()}</TableCell>
                       <TableCell>
                         <div>
-                          <p className="font-medium">{product.currentStock}</p>
+                          <p className="font-medium">{product.quantity}</p>
                           <p className="text-xs text-muted-foreground">
                             Min: {product.minimumStock}
                           </p>
                         </div>
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {stats.totalSupplied}
-                      </TableCell>
-                      <TableCell className="font-medium text-success">
-                        ৳{stats.totalEarnings.toLocaleString()}
-                      </TableCell>
-                      <TableCell>
-                        <span className="font-medium">
-                          {stats.avgCommission.toFixed(1)}%
-                        </span>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-2">

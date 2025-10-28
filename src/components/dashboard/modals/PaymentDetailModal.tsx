@@ -92,9 +92,11 @@ const PaymentDetailModal = ({
               <h4 className="font-medium">Payment Summary</h4>
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Total Amount:</span>
+                  <span className="text-muted-foreground">
+                    Total Payable Amount:
+                  </span>
                   <span className="font-medium">
-                    {formatCurrency(payment.totalAmount)}
+                    {formatCurrency(payment.netAmount)}
                   </span>
                 </div>
                 <div className="flex justify-between">

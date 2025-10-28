@@ -116,7 +116,7 @@ const ReportsPage = () => {
                     name === "amount" ? "Amount" : "Products",
                   ]}
                 />
-                <Bar dataKey="amount" fill="hsl(var(--primary))" />
+                <Bar dataKey="amount" fill="var(--primary)" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -137,13 +137,13 @@ const ReportsPage = () => {
                 <Line
                   type="monotone"
                   dataKey="paid"
-                  stroke="hsl(var(--primary))"
+                  stroke="var(--primary)"
                   strokeWidth={2}
                 />
                 <Line
                   type="monotone"
                   dataKey="due"
-                  stroke="hsl(var(--destructive))"
+                  stroke="var(--destructive)"
                   strokeWidth={2}
                 />
               </LineChart>

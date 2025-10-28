@@ -15,6 +15,7 @@ import { LogOut, Settings, User } from "lucide-react";
 // import { useDispatch, useSelector } from "react-redux";
 import { useAuth } from "@/hooks/useAuth";
 import { useLogoutMutation } from "@/redux/features/auth/authApi";
+import { Link } from "react-router";
 import { ThemeToggle } from "../common/ThemeToggle";
 
 export const DashboardHeader = () => {
@@ -82,14 +83,18 @@ export const DashboardHeader = () => {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <User className="mr-2 h-4 w-4" />
-              <span>Profile</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Settings className="mr-2 h-4 w-4" />
-              <span>Settings</span>
-            </DropdownMenuItem>
+            <Link to="/dashboard/profile">
+              <DropdownMenuItem>
+                <User className="mr-2 h-4 w-4" />
+                <span>Profile</span>
+              </DropdownMenuItem>
+            </Link>
+            <Link to="/dashboard/settings">
+              <DropdownMenuItem>
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Settings</span>
+              </DropdownMenuItem>
+            </Link>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" />

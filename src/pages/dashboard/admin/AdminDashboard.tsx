@@ -98,7 +98,7 @@ const AdminDashboard = () => {
                   <Line
                     type="monotone"
                     dataKey="amount"
-                    stroke="hsl(var(--primary))"
+                    stroke="var(--primary)"
                     strokeWidth={3}
                   />
                 </LineChart>
@@ -124,8 +124,8 @@ const AdminDashboard = () => {
                       `৳${(value / 1000).toFixed(0)}K`,
                     ]}
                   />
-                  <Bar dataKey="paid" fill="hsl(var(--success))" />
-                  <Bar dataKey="due" fill="hsl(var(--warning))" />
+                  <Bar dataKey="paid" fill="var(--success)" />
+                  <Bar dataKey="due" fill="var(--warning)" />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>

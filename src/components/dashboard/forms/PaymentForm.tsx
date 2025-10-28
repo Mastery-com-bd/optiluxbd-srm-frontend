@@ -101,7 +101,7 @@ const PaymentForm = ({ onSubmit, onCancel }: PaymentFormProps) => {
       0
     );
 
-    const dueAmount = Math.max(0, totalAmount - commissionAmount - paidAmount);
+    const dueAmount = Math.max(0, totalAmount + commissionAmount - paidAmount);
 
     return {
       totalAmount: Number(totalAmount.toFixed(2)),
@@ -410,7 +410,7 @@ const PaymentForm = ({ onSubmit, onCancel }: PaymentFormProps) => {
             <div className="flex justify-between">
               <span>Payable Amount:</span>
               <span className="font-medium">
-                ৳{(totalAmount - commissionAmount).toLocaleString()}
+                ৳{(totalAmount + commissionAmount).toLocaleString()}
               </span>
             </div>
             <div className="flex justify-between">

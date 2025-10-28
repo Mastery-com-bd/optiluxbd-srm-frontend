@@ -339,6 +339,7 @@ const PaymentManagement = () => {
                   {user?.role !== "supplier" && <TableHead>Supplier</TableHead>}
                   <TableHead>Total Amount</TableHead>
                   <TableHead>Commission</TableHead>
+                  <TableHead>Payable Amount</TableHead>
                   <TableHead>Paid Amount</TableHead>
                   <TableHead>Due Amount</TableHead>
                   <TableHead>Status</TableHead>
@@ -359,6 +360,7 @@ const PaymentManagement = () => {
                     <TableCell>
                       {formatCurrency(payment.commissionAmount)}
                     </TableCell>
+                    <TableCell>{formatCurrency(payment.netAmount)}</TableCell>
                     <TableCell className="text-green-600">
                       {formatCurrency(payment.paidAmount)}
                     </TableCell>

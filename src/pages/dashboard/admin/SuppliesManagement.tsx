@@ -176,7 +176,7 @@ const SuppliesManagement = () => {
                 Add Supply
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Add New Supply</DialogTitle>
               </DialogHeader>
@@ -215,6 +215,7 @@ const SuppliesManagement = () => {
                   <TableHead>Total Amount</TableHead>
                   <TableHead>Commission Rate</TableHead>
                   <TableHead>Commission Amount</TableHead>
+                  <TableHead>Net Amount</TableHead> {/* ✅ Added */}
                   <TableHead>Status</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Actions</TableHead>
@@ -238,6 +239,7 @@ const SuppliesManagement = () => {
                     <TableCell>
                       {formatCurrency(supply.commissionAmount)}
                     </TableCell>
+                    <TableCell>{formatCurrency(supply.netAmount)}</TableCell>
                     <TableCell>{getStatusBadge(supply.status)}</TableCell>
                     <TableCell>
                       {new Date(supply.date).toLocaleDateString()}

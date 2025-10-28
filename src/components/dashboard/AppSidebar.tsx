@@ -54,9 +54,9 @@ const staffItems = [
 ];
 
 const supplierItems = [
-  { title: "Overview", url: "/dashboard", icon: LayoutDashboard },
-  { title: "My Products", url: "/dashboard/my-products", icon: Package },
-  { title: "My Supplies", url: "/dashboard/my-supplies", icon: TruckIcon },
+  // { title: "Overview", url: "/dashboard", icon: LayoutDashboard },
+  { title: "My Supplies", url: "/dashboard/my-products", icon: Package },
+  // { title: "My Supplies", url: "/dashboard/my-supplies", icon: TruckIcon },
   { title: "My Payments", url: "/dashboard/my-payments", icon: Receipt },
 ];
 

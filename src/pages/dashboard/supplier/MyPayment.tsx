@@ -1,5 +1,7 @@
+"use client";
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
 import StatsCard from "@/components/dashboard/StatsCard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,10 +15,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { mockPayments, mockSupplies } from "@/data/mockData";
 import { useAuth } from "@/hooks/useAuth";
 import {
-  Calendar,
   Clock,
   DollarSign,
   Download,
@@ -37,90 +37,113 @@ import {
   YAxis,
 } from "recharts";
 
+import { Skeleton } from "@/components/ui/skeleton";
+
+import { useGetSupplierPaymentsQuery } from "@/redux/features/supplier/supplierApi";
+import { toast } from "sonner";
+
 const MyPayments = () => {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
+  const supplierId = user?._id;
 
-  // Filter payments for current supplier
-  const myPayments = mockPayments.filter(
-    (payment) => payment.supplierId === user?._id
-  );
-  const mySupplies = mockSupplies.filter(
-    (supply) => supply.supplierId === user?._id
+  // ✅ Fetch supplier payments only
+  const {
+    data: payments = [],
+    isLoading,
+    isError,
+  } = useGetSupplierPaymentsQuery(supplierId, { skip: !supplierId });
+
+  if (isLoading)
+    return (
+      <div className="p-10 space-y-4">
+        <Skeleton className="h-10 w-48" />
+        <Skeleton className="h-6 w-full" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
+
+  if (isError) {
+    toast.error("Failed to load payment data");
+    return <div className="text-center py-10 text-red-500">Error loading payments</div>;
+  }
+
+  // ✅ Filter search
+  const filteredPayments = payments.filter(
+    (payment: any) =>
+      payment._id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      payment.status?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const filteredPayments = myPayments.filter(
-    (payment) =>
-      payment.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      payment.status.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // ✅ Calculate stats
+  const totalPaid = payments
+    .filter((p: any) => p.status === "completed")
+    .reduce((sum: number, p: any) => sum + (p.paidAmount || 0), 0);
 
-  // Calculate stats
-  const totalPaid = myPayments
-    .filter((p) => p.status === "completed")
-    .reduce((sum, payment) => sum + payment.paidAmount, 0);
-  const totalDue = myPayments.reduce(
-    (sum, payment) => sum + payment.dueAmount,
+  const totalDue = payments.reduce(
+    (sum: number, p: any) => sum + (p.dueAmount || 0),
     0
   );
-  const pendingPayments = myPayments.filter(
-    (payment) => payment.status === "pending"
+
+  const pendingPayments = payments.filter(
+    (p: any) => p.status === "pending"
   ).length;
-  const totalSupplyValue = mySupplies.reduce(
-    (sum, supply) => sum + supply.totalAmount,
+
+  const totalSupplyValue = payments.reduce(
+    (sum: number, p: any) => sum + (p.totalAmount || 0),
     0
   );
 
-  // Chart data for payment trends
-  const paymentTrends = myPayments
-    .reduce((acc: any[], payment) => {
-      const month = new Date(payment.createdAt).toLocaleDateString("en-US", {
+  // ✅ Payment trend chart (without useMemo)
+  const paymentTrends: { month: string; paid: number; due: number }[] = [];
+  if (Array.isArray(payments)) {
+    payments.forEach((p: any) => {
+      const month = new Date(p.createdAt).toLocaleDateString("en-US", {
         month: "short",
         year: "numeric",
       });
-      const existing = acc.find((item) => item.month === month);
 
+      const existing = paymentTrends.find((g) => g.month === month);
       if (existing) {
-        existing.paid += payment.paidAmount;
-        existing.due += payment.dueAmount;
+        existing.paid += p.paidAmount || 0;
+        existing.due += p.dueAmount || 0;
       } else {
-        acc.push({
+        paymentTrends.push({
           month,
-          paid: payment.paidAmount,
-          due: payment.dueAmount,
+          paid: p.paidAmount || 0,
+          due: p.dueAmount || 0,
         });
       }
+    });
+  }
+  const last6MonthsTrends = paymentTrends.slice(-6);
 
-      return acc;
-    }, [])
-    .slice(-6);
-
-  // Payment status distribution
+  // ✅ Payment status chart data
   const statusData = [
     {
       name: "Completed",
-      value: myPayments.filter((p) => p.status === "completed").length,
+      value: payments.filter((p: any) => p.status === "completed").length,
       color: "hsl(var(--success))",
     },
     {
       name: "Pending",
-      value: myPayments.filter((p) => p.status === "pending").length,
+      value: payments.filter((p: any) => p.status === "pending").length,
       color: "hsl(var(--warning))",
     },
     {
       name: "Partial",
-      value: myPayments.filter((p) => p.status === "partial").length,
+      value: payments.filter((p: any) => p.status === "partial").length,
       color: "hsl(var(--destructive))",
     },
   ].filter((item) => item.value > 0);
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "paid":
+      case "completed":
         return "bg-success/10 text-success";
       case "pending":
         return "bg-warning/10 text-warning";
-      case "overdue":
+      case "partial":
         return "bg-destructive/10 text-destructive";
       default:
         return "bg-muted/10 text-muted-foreground";
@@ -143,20 +166,18 @@ const MyPayments = () => {
         </Button>
       </div>
 
-      {/* Stats Grid */}
+      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <StatsCard
           title="Total Paid"
-          value={`৳${(totalPaid / 100000).toFixed(1)}L`}
-          change={`${
-            myPayments.filter((p) => p.status === "completed").length
-          } payments`}
+          value={`৳${totalPaid.toLocaleString()}`}
+          change={`${payments.filter((p: any) => p.status === "completed").length} payments`}
           changeType="positive"
           icon={DollarSign}
         />
         <StatsCard
           title="Amount Due"
-          value={`৳${(totalDue / 100000).toFixed(1)}L`}
+          value={`৳${totalDue.toLocaleString()}`}
           change="Outstanding balance"
           changeType={totalDue > 0 ? "negative" : "positive"}
           icon={Clock}
@@ -170,14 +191,18 @@ const MyPayments = () => {
         />
         <StatsCard
           title="Payment Rate"
-          value={`${((totalPaid / totalSupplyValue) * 100).toFixed(1)}%`}
+          value={
+            totalSupplyValue > 0
+              ? `${((totalPaid / totalSupplyValue) * 100).toFixed(1)}%`
+              : "0%"
+          }
           change="Of total supplies"
           changeType="positive"
           icon={TrendingUp}
         />
       </div>
 
-      {/* Charts Row */}
+      {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Payment Trends */}
         <Card>
@@ -190,20 +215,11 @@ const MyPayments = () => {
           <CardContent>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={paymentTrends}>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    className="stroke-muted"
-                  />
+                <LineChart data={last6MonthsTrends}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                   <XAxis dataKey="month" className="text-xs" />
                   <YAxis className="text-xs" />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "hsl(var(--background))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: "8px",
-                    }}
-                  />
+                  <Tooltip />
                   <Line
                     type="monotone"
                     dataKey="paid"
@@ -224,7 +240,7 @@ const MyPayments = () => {
           </CardContent>
         </Card>
 
-        {/* Payment Status Distribution */}
+        {/* Payment Status */}
         <Card>
           <CardHeader>
             <CardTitle>Payment Status Distribution</CardTitle>
@@ -251,7 +267,7 @@ const MyPayments = () => {
               </ResponsiveContainer>
             </div>
             <div className="flex justify-center space-x-4 mt-4">
-              {statusData.map((entry, _index) => (
+              {statusData.map((entry) => (
                 <div key={entry.name} className="flex items-center space-x-2">
                   <div
                     className="w-3 h-3 rounded-full"
@@ -292,51 +308,30 @@ const MyPayments = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Payment ID</TableHead>
                   <TableHead>Date</TableHead>
-                  <TableHead>Due Date</TableHead>
-                  <TableHead>Paid Amount</TableHead>
-                  <TableHead>Due Amount</TableHead>
-                  <TableHead>Commission Rate</TableHead>
+                  <TableHead>Total</TableHead>
+                  <TableHead>Paid</TableHead>
+                  <TableHead>Due</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredPayments.map((payment) => (
-                  <TableRow key={payment.id}>
-                    <TableCell className="font-mono text-sm">
-                      {payment.id}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span>
-                          {new Date(payment.createdAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </TableCell>
+                {filteredPayments.map((payment: any) => (
+                  <TableRow key={payment._id}>
                     <TableCell>
                       {new Date(payment.createdAt).toLocaleDateString()}
                     </TableCell>
-                    <TableCell className="font-medium text-success">
-                      ৳{payment.paidAmount.toLocaleString()}
+                    <TableCell>৳{payment.totalAmount?.toLocaleString()}</TableCell>
+                    <TableCell className="text-success font-medium">
+                      ৳{payment.paidAmount?.toLocaleString()}
                     </TableCell>
-                    <TableCell className="font-medium text-warning">
-                      ৳{payment.dueAmount.toLocaleString()}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">12%</Badge>
+                    <TableCell className="text-warning font-medium">
+                      ৳{payment.dueAmount?.toLocaleString()}
                     </TableCell>
                     <TableCell>
                       <Badge className={getStatusColor(payment.status)}>
                         {payment.status}
                       </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="outline" size="sm">
-                        <Download className="h-4 w-4" />
-                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}

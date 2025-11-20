@@ -1,4 +1,5 @@
 import { baseApi } from "@/redux/baseApi";
+import { buildParams } from "@/utills/paramBuilder";
 
 export const inventoryApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
@@ -7,7 +8,7 @@ export const inventoryApi = baseApi.injectEndpoints({
       invalidatesTags: ["Inventory"],
     }),
     getProducts: build.query({
-      query: () => "/inventory",
+      query: (params) => `/inventory?${buildParams(params)}`,
       providesTags: ["Inventory"],
     }),
     getProductById: build.query({
@@ -46,6 +47,12 @@ export const inventoryApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["Inventory"],
     }),
+    deleteSupplier: build.mutation<void, { productId: string; supplierId: string }>({
+      query: ({ productId, supplierId }) => ({
+        url: `/inventory/${productId}/suppliers/${supplierId}`,
+        method: "DELETE",
+      }),
+    }),
   }),
 });
 
@@ -58,4 +65,5 @@ export const {
   useUpdateStockMutation,
   useGetMinimumStockQuery,
   useBulkImportMutation,
+  useDeleteSupplierMutation,
 } = inventoryApi;

@@ -14,10 +14,14 @@ export const supplierApi = baseApi.injectEndpoints({
       query: (id) => `/suppliers/${id}/products`,
       providesTags: ["Suppliers"],
     }),
+
     getSupplierPayments: build.query({
-      query: (id) => `/suppliers/${id}/payments`,
-      providesTags: ["Suppliers"],
+      query: () => ({
+        url: `/payments/my-payments`,
+        method: "GET",
+      })
     }),
+
     getPaymentSummary: build.query({
       query: (id) => `/suppliers/${id}/payments/summary`,
       providesTags: ["Suppliers"],
@@ -45,8 +49,8 @@ export const {
   useGetSuppliersQuery,
   useGetSupplierByIdQuery,
   useGetSupplierProductsQuery,
-  useGetSupplierPaymentsQuery,
   useGetPaymentSummaryQuery,
   useAddPaymentMutation,
   useUpdateCommissionMutation,
+  useGetSupplierPaymentsQuery,
 } = supplierApi;

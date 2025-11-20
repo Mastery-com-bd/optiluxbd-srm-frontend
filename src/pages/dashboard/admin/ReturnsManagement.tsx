@@ -50,14 +50,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import PaginationControls from "@/components/ui/PaginationComponent";
 
 const ReturnsManagement = () => {
+  const [filters, setFilters] = useState({ limit: 10, page: 1 });
   const { user } = useAuth();
   const {
     data: returnsData,
     isLoading: returnsLoading,
     refetch,
-  } = useGetReturnsQuery(undefined);
+  } = useGetReturnsQuery(filters);
+  const pagination = returnsData?.pagination || { page: 1, totalPages: 1, total: 0 };
   const [createReturn] = useCreateReturnMutation();
   const [updateReturn] = useUpdateReturnMutation();
   const [deleteReturn] = useDeleteReturnMutation();
@@ -70,7 +73,7 @@ const ReturnsManagement = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [returnToDelete, setReturnToDelete] = useState<any | null>(null);
 
-  const returns = returnsData?.data || [];
+  const returns = returnsData?.data?.items || [];
 
   const filteredReturns = returns.filter((returnItem: any) => {
     const productName = returnItem.productId?.name?.toLowerCase() || "";
@@ -202,8 +205,8 @@ const ReturnsManagement = () => {
   const displayReturns =
     user?.role === "staff"
       ? filteredReturns.filter(
-          (returnItem: any) => getStaffId(returnItem.staffId) === user._id
-        )
+        (returnItem: any) => getStaffId(returnItem.staffId) === user._id
+      )
       : filteredReturns;
 
   if (user?.role !== "admin" && user?.role !== "staff") {
@@ -215,7 +218,7 @@ const ReturnsManagement = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-[87vw] lg:w-full">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold">Returns Management</h1>
@@ -370,39 +373,39 @@ const ReturnsManagement = () => {
                           {(user?.role === "admin" ||
                             (user?.role === "staff" &&
                               getStaffId(returnItem.staffId) === user._id)) && (
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleEditReturn(returnItem)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-
-                              {returnItem.status === "pending" && (
+                              <>
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() =>
-                                    handleProcessReturn(returnItem._id)
-                                  }
+                                  onClick={() => handleEditReturn(returnItem)}
                                 >
-                                  Complete
+                                  <Edit className="h-4 w-4" />
                                 </Button>
-                              )}
 
-                              {user?.role === "admin" && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => openDeleteDialog(returnItem)}
-                                  className="text-red-600 hover:text-red-800"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              )}
-                            </>
-                          )}
+                                {returnItem.status === "pending" && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() =>
+                                      handleProcessReturn(returnItem._id)
+                                    }
+                                  >
+                                    Complete
+                                  </Button>
+                                )}
+
+                                {user?.role === "admin" && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => openDeleteDialog(returnItem)}
+                                    className="text-red-600 hover:text-red-800"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                )}
+                              </>
+                            )}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -413,7 +416,11 @@ const ReturnsManagement = () => {
           )}
         </CardContent>
       </Card>
-
+      <PaginationControls
+        pagination={pagination}
+        onPrev={() => setFilters({ ...filters, page: filters.page - 1 })}
+        onNext={() => setFilters({ ...filters, page: filters.page + 1 })}
+      />
       {/* Edit Return Modal */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
         <DialogContent className="max-w-2xl">

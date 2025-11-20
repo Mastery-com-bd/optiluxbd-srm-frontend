@@ -65,14 +65,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import PaginationControls from "@/components/ui/PaginationComponent";
 
 const UserManagement = () => {
+  const [filters, setFilters] = useState({ limit: 10, page: 1 });
   const { user: currentUser } = useAuth();
   const {
     data: usersData,
     isLoading,
     refetch,
-  } = useGetAllUsersQuery(undefined);
+  } = useGetAllUsersQuery(filters);
   const [approveUser] = useApproveUserMutation();
   const [blockUser] = useBlockUserMutation();
   const [deleteUser] = useDeleteUserMutation();
@@ -90,7 +92,8 @@ const UserManagement = () => {
     role: string;
   } | null>(null);
 
-  const users = usersData?.data || [];
+  const users = usersData?.data?.items || [];
+  const pagination = usersData?.pagination || { page: 1, totalPages: 1, total: 0 };
 
   const filteredUsers = users?.filter((user: any) => {
     const matchesSearch =
@@ -202,7 +205,7 @@ const UserManagement = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-[87vw] lg:w-full">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">User Management</h1>
@@ -382,7 +385,12 @@ const UserManagement = () => {
           </Table>
         </CardContent>
       </Card>
-
+      {/* pagination */}
+      <PaginationControls
+        pagination={pagination}
+        onPrev={() => setFilters({ ...filters, page: filters.page - 1 })}
+        onNext={() => setFilters({ ...filters, page: filters.page + 1 })}
+      />
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>

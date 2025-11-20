@@ -19,7 +19,6 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  // CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -31,14 +30,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
+import PaginationControls from "@/components/ui/PaginationComponent";
 import {
   Table,
   TableBody,
@@ -52,11 +44,9 @@ import {
   useDeleteProductMutation,
   useGetProductsQuery,
 } from "@/redux/features/inventory/inventoryApi";
-import { useGetAllUsersQuery } from "@/redux/features/user/userApi";
 import {
   AlertTriangle,
   Edit,
-  Eye,
   Package,
   Plus,
   Search,
@@ -66,40 +56,23 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 const ProductManagement = () => {
+  const [filters, setFilters] = useState({ limit: 10, page: 1 });
   const { user } = useAuth();
-  const { data: productsData, isLoading } = useGetProductsQuery(undefined);
-  const { data: usersData } = useGetAllUsersQuery(undefined);
-
+  const { data: productsData, isLoading } = useGetProductsQuery(filters);
   const [deleteProduct] = useDeleteProductMutation();
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any | null>(null);
-  const [viewingProduct, setViewingProduct] = useState<any | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const products = productsData?.items || [];
+  const pagination = productsData?.pagination || { page: 1, totalPages: 1, total: 0 };
 
-  const products = productsData || [];
-  const users = usersData?.data || [];
-
-  const getSupplierName = (supplierId: string) => {
-    const supplier = users.find((u: any) => u._id === supplierId);
-    return supplier?.profile.name || "Unknown Supplier";
-  };
-
-  const filteredProducts = products.filter(
-    (product: any) =>
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.category.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredProducts = products.filter((product: any) =>
+    product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    product.category.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const lowStockProducts = filteredProducts.filter(
-    (product: any) => product.quantity <= product.minimumStock
-  );
-
-  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
-  const paginatedProducts = filteredProducts.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+    (product: any) => product.totalQuantity <= product.minimumStock
   );
 
   const handleDeleteProduct = async (productId: string) => {
@@ -107,7 +80,6 @@ const ProductManagement = () => {
       toast.error("Only admin can delete products.");
       return;
     }
-
     try {
       await deleteProduct(productId).unwrap();
       toast.success("Product has been deleted successfully.");
@@ -116,15 +88,11 @@ const ProductManagement = () => {
     }
   };
 
-  const handleEdit = (product: any) => {
-    setEditingProduct(product);
-  };
+  const handleEdit = (product: any) => setEditingProduct(product);
 
   const getStockStatus = (quantity: number, minimumStock: number) => {
-    if (quantity === 0)
-      return { label: "Out of Stock", variant: "destructive" as const };
-    if (quantity <= minimumStock)
-      return { label: "Low Stock", variant: "destructive" as const };
+    if (quantity === 0) return { label: "Out of Stock", variant: "destructive" as const };
+    if (quantity <= minimumStock) return { label: "Low Stock", variant: "destructive" as const };
     return { label: "In Stock", variant: "default" as const };
   };
 
@@ -136,6 +104,16 @@ const ProductManagement = () => {
     }).format(amount);
   };
 
+  const minPrice = (product: any): number => {
+    if (!product?.priceVariations?.length) return 0;
+    return Math.min(...product.priceVariations.map((v: any) => v.sellingPrice || 0));
+  };
+
+  const maxPrice = (product: any): number => {
+    if (!product?.priceVariations?.length) return 0;
+    return Math.max(...product.priceVariations.map((v: any) => v.sellingPrice || 0));
+  };
+
   if (user?.role !== "admin" && user?.role !== "staff") {
     return <PreventAccessRoutes />;
   }
@@ -145,17 +123,12 @@ const ProductManagement = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-[87vw] lg:w-full overflow-hidden">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">
-            Inventory Management
-          </h1>
-          <p className="text-muted-foreground">
-            Manage products and stock levels
-          </p>
+          <h1 className="text-xl lg:text-3xl font-bold text-foreground">Inventory Management</h1>
+          <p className="text-muted-foreground">Manage products and stock levels</p>
         </div>
-
         {(user?.role === "admin" || user?.role === "staff") && (
           <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
             <DialogTrigger asChild>
@@ -168,18 +141,14 @@ const ProductManagement = () => {
               <DialogHeader>
                 <DialogTitle>Add New Product</DialogTitle>
               </DialogHeader>
-              <ProductForm
-                onSubmit={() => setIsAddModalOpen(false)}
-                isAdd={true}
-              />
+              <ProductForm onSubmit={() => setIsAddModalOpen(false)} isAdd={true} />
             </DialogContent>
           </Dialog>
         )}
       </div>
 
-      {/* Low Stock Alert */}
       {lowStockProducts.length > 0 && (
-        <Card className="border-warning bg-warning/5">
+        <Card className="border-warning bg-warning/5 w-full">
           <CardHeader>
             <CardTitle className="flex items-center text-warning">
               <AlertTriangle className="h-5 w-5 mr-2" />
@@ -198,15 +167,11 @@ const ProductManagement = () => {
                     <div>
                       <p className="font-medium text-sm">{product.name}</p>
                       <p className="text-xs text-muted-foreground">
-                        Stock: {product.quantity}
+                        Stock: {product.totalQuantity}
                       </p>
                     </div>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEdit(product)}
-                  >
+                  <Button variant="outline" size="sm" onClick={() => handleEdit(product)}>
                     Update
                   </Button>
                 </div>
@@ -216,7 +181,6 @@ const ProductManagement = () => {
         </Card>
       )}
 
-      {/* Search and Filters */}
       <Card>
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row gap-4">
@@ -242,21 +206,20 @@ const ProductManagement = () => {
                 <TableHead>Image</TableHead>
                 <TableHead>Product</TableHead>
                 <TableHead>Category</TableHead>
-                <TableHead>Cost Price</TableHead>
-                <TableHead>Selling Price</TableHead>
+                <TableHead>Price Range</TableHead>
                 <TableHead>Stock</TableHead>
-                <TableHead>Supplier</TableHead>
+                <TableHead>Suppliers</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedProducts.map((product: any, index: number) => {
+              {filteredProducts.map((product: any, index: number) => {
                 const stockStatus = getStockStatus(
-                  product.quantity,
+                  product.totalQuantity,
                   product.minimumStock
                 );
-                const slNo = (currentPage - 1) * itemsPerPage + index + 1;
+                const slNo = (filters.page - 1) * filters.limit + index + 1;
                 return (
                   <TableRow key={product._id}>
                     <TableCell>{slNo}</TableCell>
@@ -269,83 +232,65 @@ const ProductManagement = () => {
                         />
                       ) : (
                         <div className="h-12 w-12 rounded-md bg-muted flex items-center justify-center">
-                          <span className="text-xs text-muted-foreground">
-                            No Image
-                          </span>
+                          <span className="text-xs text-muted-foreground">No Image</span>
                         </div>
                       )}
                     </TableCell>
                     <TableCell>
                       <div>
                         <div className="font-medium">{product.name}</div>
-                        <div className="text-sm text-muted-foreground line-clamp-1">
-                          {product.description}
-                        </div>
                       </div>
                     </TableCell>
                     <TableCell>{product.category}</TableCell>
-                    <TableCell>{formatCurrency(product.costPrice)}</TableCell>
                     <TableCell>
-                      {formatCurrency(product.sellingPrice)}
+                      {formatCurrency(minPrice(product))} - {formatCurrency(maxPrice(product))}
                     </TableCell>
                     <TableCell>
-                      {product.quantity}/{product.minimumStock}
+                      {product.totalQuantity}/{product.minimumStock}
                     </TableCell>
-                    <TableCell>{getSupplierName(product.supplier)}</TableCell>
+                    <TableCell>{product.priceVariations.length}</TableCell>
                     <TableCell>
-                      <Badge variant={stockStatus.variant}>
-                        {stockStatus.label}
-                      </Badge>
+                      <Badge variant={stockStatus.variant}>{stockStatus.label}</Badge>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">
+                        <ProductDetailModal product={product} />
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => setViewingProduct(product)}
+                          onClick={() => setEditingProduct(product)}
                         >
-                          <Eye className="h-4 w-4" />
+                          <Edit className="h-4 w-4" />
                         </Button>
-                        {(user?.role === "admin" || user?.role === "staff") && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setEditingProduct(product)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        )}
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            {user?.role !== "staff" && (
+                        {user?.role !== "staff" && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
                               <Button variant="destructive" size="sm">
                                 <Trash2 className="h-4 w-4" />
                               </Button>
-                            )}
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>
-                                Are you sure you want to delete this product?
-                              </AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This action cannot be undone. The product{" "}
-                                <span className="font-semibold">
-                                  {product.name}
-                                </span>{" "}
-                                will be permanently removed from the database.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDeleteProduct(product._id)}
-                              >
-                                Yes, Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                  Are you sure you want to delete this product?
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This action cannot be undone. Product{" "}
+                                  <span className="font-semibold">{product.name}</span> will be
+                                  permanently deleted.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDeleteProduct(product._id)}
+                                >
+                                  Yes, Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -353,55 +298,16 @@ const ProductManagement = () => {
               })}
             </TableBody>
           </Table>
-
-          {totalPages > 1 && (
-            <Pagination className="mt-4">
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    onClick={() =>
-                      setCurrentPage((prev) => Math.max(prev - 1, 1))
-                    }
-                    className={
-                      currentPage === 1 ? "pointer-events-none opacity-50" : ""
-                    }
-                  />
-                </PaginationItem>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                  (page) => (
-                    <PaginationItem key={page}>
-                      <PaginationLink
-                        onClick={() => setCurrentPage(page)}
-                        isActive={currentPage === page}
-                      >
-                        {page}
-                      </PaginationLink>
-                    </PaginationItem>
-                  )
-                )}
-                <PaginationItem>
-                  <PaginationNext
-                    onClick={() =>
-                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                    }
-                    className={
-                      currentPage === totalPages
-                        ? "pointer-events-none opacity-50"
-                        : ""
-                    }
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          )}
         </CardContent>
       </Card>
 
-      {/* Edit Product Modal */}
-      <Dialog
-        open={!!editingProduct}
-        onOpenChange={() => setEditingProduct(null)}
-      >
+      <PaginationControls
+        pagination={pagination}
+        onPrev={() => setFilters({ ...filters, page: filters.page - 1 })}
+        onNext={() => setFilters({ ...filters, page: filters.page + 1 })}
+      />
+
+      <Dialog open={!!editingProduct} onOpenChange={() => setEditingProduct(null)}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Product</DialogTitle>
@@ -415,15 +321,6 @@ const ProductManagement = () => {
           )}
         </DialogContent>
       </Dialog>
-
-      {/* Product Detail Modal */}
-      {viewingProduct && (
-        <ProductDetailModal
-          product={viewingProduct}
-          isOpen={!!viewingProduct}
-          onClose={() => setViewingProduct(null)}
-        />
-      )}
     </div>
   );
 };

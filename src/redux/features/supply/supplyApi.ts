@@ -48,6 +48,12 @@ export const supplyApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["Supply", "Inventory"],
     }),
+    getSupplyBySupplierId: builder.query({
+      query: (id) => ({
+        url: `/inventory/supplier/${id}`,
+        method: "GET",
+      })
+    }),
   }),
 });
 
@@ -57,4 +63,5 @@ export const {
   useGetSupplyByIdQuery,
   useUpdateSupplyMutation,
   useDeleteSupplyMutation,
+  useGetSupplyBySupplierIdQuery,
 } = supplyApi;

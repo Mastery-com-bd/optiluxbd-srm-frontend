@@ -38,8 +38,8 @@ const PaymentForm = ({ onSubmit, onCancel }: PaymentFormProps) => {
     useGetAllSuppliesQuery(undefined);
 
   const suppliers =
-    usersData?.data?.filter((user: any) => user.role === "supplier") || [];
-  const supplies = suppliesData?.data || [];
+    usersData?.data?.items.filter((user: any) => user.role === "supplier") || [];
+  const supplies = suppliesData?.data?.items || [];
 
   const {
     control,

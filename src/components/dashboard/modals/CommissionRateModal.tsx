@@ -46,7 +46,7 @@ const CommissionRateModal = ({ isOpen, onClose }: CommissionRateModalProps) => {
 
   // Get only suppliers from users data
   const suppliers =
-    usersData?.data?.filter((user: any) => user.role === "supplier") || [];
+    usersData?.data?.items.filter((user: any) => user.role === "supplier") || [];
 
   const [editingSupplier, setEditingSupplier] = useState<string | null>(null);
   const [tempRate, setTempRate] = useState<number>(0);

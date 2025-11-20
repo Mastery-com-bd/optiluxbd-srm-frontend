@@ -15,11 +15,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useAuth } from "@/hooks/useAuth";
 import {
   Clock,
   DollarSign,
   Download,
+  Eye,
   Search,
   TrendingUp,
 } from "lucide-react";
@@ -38,22 +38,22 @@ import {
 } from "recharts";
 
 import { Skeleton } from "@/components/ui/skeleton";
-
 import { useGetSupplierPaymentsQuery } from "@/redux/features/supplier/supplierApi";
 import { toast } from "sonner";
+import PaymentDetailModal from "@/components/dashboard/modals/PaymentDetailModal";
+import PaginationControls from "@/components/ui/PaginationComponent";
 
 const MyPayments = () => {
-  const { user } = useAuth();
+  const [filters, setFilters] = useState({ limit: 10, page: 1 });
   const [searchQuery, setSearchQuery] = useState("");
-  const supplierId = user?._id;
-
-  // ✅ Fetch supplier payments only
+  const [viewingPayment, setViewingPayment] = useState<any | null>(null);
   const {
-    data: payments = [],
+    data: paymentsData,
     isLoading,
     isError,
-  } = useGetSupplierPaymentsQuery(supplierId, { skip: !supplierId });
-
+  } = useGetSupplierPaymentsQuery(undefined);
+  const payments = paymentsData?.payments?.items || [];
+  const pagination = paymentsData?.pagination || { page: 1, totalPages: 1, total: 0 };
   if (isLoading)
     return (
       <div className="p-10 space-y-4">
@@ -68,14 +68,14 @@ const MyPayments = () => {
     return <div className="text-center py-10 text-red-500">Error loading payments</div>;
   }
 
-  // ✅ Filter search
-  const filteredPayments = payments.filter(
+  // Filter search
+  const filteredPayments = payments?.filter(
     (payment: any) =>
       payment._id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       payment.status?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // ✅ Calculate stats
+  // Calculate stats
   const totalPaid = payments
     .filter((p: any) => p.status === "completed")
     .reduce((sum: number, p: any) => sum + (p.paidAmount || 0), 0);
@@ -94,7 +94,7 @@ const MyPayments = () => {
     0
   );
 
-  // ✅ Payment trend chart (without useMemo)
+  // Payment trend chart (without useMemo)
   const paymentTrends: { month: string; paid: number; due: number }[] = [];
   if (Array.isArray(payments)) {
     payments.forEach((p: any) => {
@@ -118,7 +118,7 @@ const MyPayments = () => {
   }
   const last6MonthsTrends = paymentTrends.slice(-6);
 
-  // ✅ Payment status chart data
+  // Payment status chart data
   const statusData = [
     {
       name: "Completed",
@@ -151,7 +151,7 @@ const MyPayments = () => {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto  lg:p-6 space-y-6  w-[87vw] lg:w-full">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
@@ -313,6 +313,7 @@ const MyPayments = () => {
                   <TableHead>Paid</TableHead>
                   <TableHead>Due</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Invoice</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -333,6 +334,17 @@ const MyPayments = () => {
                         {payment.status}
                       </Badge>
                     </TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setViewingPayment(payment)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -340,6 +352,20 @@ const MyPayments = () => {
           </div>
         </CardContent>
       </Card>
+      {/* pagination */}
+      <PaginationControls
+        pagination={pagination}
+        onPrev={() => setFilters({ ...filters, page: filters.page - 1 })}
+        onNext={() => setFilters({ ...filters, page: filters.page + 1 })}
+      />
+      {/* Payment Detail Modal */}
+      {viewingPayment && (
+        <PaymentDetailModal
+          payment={viewingPayment}
+          isOpen={!!viewingPayment}
+          onClose={() => setViewingPayment(null)}
+        />
+      )}
     </div>
   );
 };

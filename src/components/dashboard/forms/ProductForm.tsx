@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+// ProductForm.tsx
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,21 +21,31 @@ import { useGetAllUsersQuery } from "@/redux/features/user/userApi";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Camera } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import {
+  Controller,
+  useFieldArray,
+  useForm,
+} from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+const priceVariationSchema = z.object({
+  size: z.string().nullable(),
+  color: z.string().nullable(),
+  costPrice: z.number(),
+  sellingPrice: z.number(),
+  sku: z.string().optional(),
+  quantity: z.number(),
+  supplier: z.string().nullable(),
+});
+
 const productSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  sku: z.string().min(1, "SKU is required"),
+  name: z.string().min(1),
   description: z.string().optional(),
-  category: z.string().min(1, "Category is required"),
-  costPrice: z.number().min(0, "Cost price must be positive"),
-  sellingPrice: z.number().min(0, "Selling price must be positive"),
-  quantity: z.number().min(0, "Quantity must be non-negative"),
-  minimumStock: z.number().min(0, "Minimum stock must be non-negative"),
-  supplier: z.string().min(1, "Supplier is required"),
-  imageUrl: z.string().optional(),
+  minimumStock: z.number().min(0),
+  category: z.string().min(1),
+  imageUrl: z.string().optional().nullable(),
+  priceVariations: z.array(priceVariationSchema).min(1),
 });
 
 type ProductFormData = z.infer<typeof productSchema>;
@@ -55,41 +67,47 @@ const ProductForm = ({ initialData, onSubmit, isAdd }: ProductFormProps) => {
   );
 
   const suppliers =
-    usersData?.data?.filter((user: any) => user.role === "supplier") || [];
+    usersData?.data?.items.filter((user: any) => user.role === "supplier") || [];
 
   const {
     control,
     handleSubmit,
     setValue,
-    formState: { errors },
   } = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
     defaultValues: {
       name: "",
-      sku: "",
       description: "",
-      category: "",
-      costPrice: 0,
-      sellingPrice: 0,
-      quantity: 0,
       minimumStock: 0,
-      supplier: "",
-      imageUrl: undefined,
+      category: "",
+      imageUrl: null,
+      priceVariations: [
+        {
+          size: null,
+          color: null,
+          costPrice: 0,
+          sellingPrice: 0,
+          sku: "",
+          quantity: 0,
+          supplier: null,
+        },
+      ],
     },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "priceVariations",
   });
 
   useEffect(() => {
     if (initialData) {
       setValue("name", initialData.name);
-      setValue("sku", initialData.sku);
       setValue("description", initialData.description || "");
-      setValue("category", initialData.category);
-      setValue("costPrice", initialData.costPrice);
-      setValue("sellingPrice", initialData.sellingPrice);
-      setValue("quantity", initialData.quantity);
       setValue("minimumStock", initialData.minimumStock);
-      setValue("supplier", initialData.supplier);
-      setValue("imageUrl", initialData.imageUrl || undefined);
+      setValue("category", initialData.category);
+      setValue("imageUrl", initialData.imageUrl || null);
+      setValue("priceVariations", initialData.priceVariations || []);
       setPreviewUrl(initialData.imageUrl);
     }
   }, [initialData, setValue]);
@@ -146,6 +164,7 @@ const ProductForm = ({ initialData, onSubmit, isAdd }: ProductFormProps) => {
 
   return (
     <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
+      {/* Image Upload */}
       <div className="flex justify-center mb-4">
         <div className="relative">
           <img
@@ -172,201 +191,211 @@ const ProductForm = ({ initialData, onSubmit, isAdd }: ProductFormProps) => {
           </Button>
         </div>
       </div>
-      {errors.imageUrl && (
-        <p className="text-sm text-destructive">{errors.imageUrl.message}</p>
-      )}
 
+      {/* Basic Product Info */}
       <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="name">Product Name *</Label>
+        <div>
+          <Label>Product Name</Label>
           <Controller
             name="name"
             control={control}
-            render={({ field }) => <Input id="name" {...field} />}
+            render={({ field }) => <Input {...field} />}
           />
-          {errors.name && (
-            <p className="text-sm text-destructive">{errors.name.message}</p>
-          )}
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="sku">Product Code *</Label>
-          <Controller
-            name="sku"
-            control={control}
-            render={({ field }) => <Input id="sku" {...field} />}
-          />
-          {errors.sku && (
-            <p className="text-sm text-destructive">{errors.sku.message}</p>
-          )}
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="description">Description</Label>
-        <Controller
-          name="description"
-          control={control}
-          render={({ field }) => (
-            <Textarea id="description" rows={3} {...field} />
-          )}
-        />
-        {errors.description && (
-          <p className="text-sm text-destructive">
-            {errors.description.message}
-          </p>
-        )}
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="category">Category *</Label>
+        <div>
+          <Label>Category</Label>
           <Controller
             name="category"
             control={control}
             render={({ field }) => (
-              <Select onValueChange={field.onChange} value={field.value}>
+              <Select value={field.value} onValueChange={field.onChange}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
+                  <SelectValue placeholder="Choose category" />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {cat}
+                  {categories.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             )}
           />
-          {errors.category && (
-            <p className="text-sm text-destructive">
-              {errors.category.message}
-            </p>
-          )}
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="supplier">Supplier *</Label>
-          <Controller
-            name="supplier"
-            control={control}
-            render={({ field }) => (
-              <Select onValueChange={field.onChange} value={field.value}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select supplier" />
-                </SelectTrigger>
-                <SelectContent>
-                  {suppliers.map((supplier: any) => (
-                    <SelectItem key={supplier._id} value={supplier._id}>
-                      {supplier.profile.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          />
-          {errors.supplier && (
-            <p className="text-sm text-destructive">
-              {errors.supplier.message}
-            </p>
-          )}
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="costPrice">Cost Price (BDT) *</Label>
-          <Controller
-            name="costPrice"
-            control={control}
-            render={({ field }) => (
-              <Input
-                id="costPrice"
-                type="number"
-                step="0.01"
-                {...field}
-                onChange={(e) =>
-                  field.onChange(parseFloat(e.target.value) || 0)
-                }
-              />
-            )}
-          />
-          {errors.costPrice && (
-            <p className="text-sm text-destructive">
-              {errors.costPrice.message}
-            </p>
+      <div>
+        <Label>Description</Label>
+        <Controller
+          name="description"
+          control={control}
+          render={({ field }) => (
+            <Textarea rows={3} {...field} placeholder="Description" />
           )}
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="sellingPrice">Selling Price (BDT) *</Label>
-          <Controller
-            name="sellingPrice"
-            control={control}
-            render={({ field }) => (
-              <Input
-                id="sellingPrice"
-                type="number"
-                step="0.01"
-                {...field}
-                onChange={(e) =>
-                  field.onChange(parseFloat(e.target.value) || 0)
-                }
-              />
-            )}
-          />
-          {errors.sellingPrice && (
-            <p className="text-sm text-destructive">
-              {errors.sellingPrice.message}
-            </p>
-          )}
-        </div>
+        />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="quantity">Quantity *</Label>
-          <Controller
-            name="quantity"
-            control={control}
-            render={({ field }) => (
-              <Input
-                id="quantity"
-                type="number"
-                {...field}
-                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-              />
-            )}
-          />
-          {errors.quantity && (
-            <p className="text-sm text-destructive">
-              {errors.quantity.message}
-            </p>
+      <div>
+        <Label>Minimum Stock</Label>
+        <Controller
+          name="minimumStock"
+          control={control}
+          render={({ field }) => (
+            <Input
+              type="number"
+              {...field}
+              onChange={(e) => field.onChange(Number(e.target.value))}
+            />
           )}
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="minimumStock">Minimum Stock *</Label>
-          <Controller
-            name="minimumStock"
-            control={control}
-            render={({ field }) => (
-              <Input
-                id="minimumStock"
-                type="number"
-                {...field}
-                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-              />
-            )}
-          />
-          {errors.minimumStock && (
-            <p className="text-sm text-destructive">
-              {errors.minimumStock.message}
-            </p>
-          )}
-        </div>
+        />
       </div>
 
-      <div className="flex justify-end space-x-2 pt-4">
+      {/* Price Variations */}
+      <div className="border p-4 rounded-md space-y-4">
+        <h3 className="font-semibold">Price Variations</h3>
+        {fields.map((item, index) => (
+          <div
+            className="grid grid-cols-2 md:grid-cols-3 gap-4 border rounded-md p-4 relative"
+            key={item.id}
+          >
+            <div>
+              <Label>Size</Label>
+              <Controller
+                control={control}
+                name={`priceVariations.${index}.size`}
+                render={({ field: { value, ...rest } }) => (
+                  <Input placeholder="Size" value={value ?? ""} {...rest} />
+                )}
+              />
+            </div>
+            <div>
+              <Label>Color</Label>
+              <Controller
+                control={control}
+                name={`priceVariations.${index}.color`}
+                render={({ field: { value, ...rest } }) => (
+                  <Input placeholder="Color" value={value ?? ""} {...rest} />
+                )}
+              />
+            </div>
+            <div>
+              <Label>SKU</Label>
+              <Controller
+                control={control}
+                name={`priceVariations.${index}.sku`}
+                render={({ field }) => <Input placeholder="SKU" {...field} />}
+              />
+            </div>
+            <div>
+              <Label>Cost Price</Label>
+              <Controller
+                control={control}
+                name={`priceVariations.${index}.costPrice`}
+                render={({ field }) => (
+                  <Input
+                    type="number"
+                    placeholder="0"
+                    {...field}
+                    onChange={(e) =>
+                      field.onChange(parseFloat(e.target.value) || 0)
+                    }
+                  />
+                )}
+              />
+            </div>
+            <div>
+              <Label>Selling Price</Label>
+              <Controller
+                control={control}
+                name={`priceVariations.${index}.sellingPrice`}
+                render={({ field }) => (
+                  <Input
+                    type="number"
+                    placeholder="0"
+                    {...field}
+                    onChange={(e) =>
+                      field.onChange(parseFloat(e.target.value) || 0)
+                    }
+                  />
+                )}
+              />
+            </div>
+            <div>
+              <Label>Quantity</Label>
+              <Controller
+                control={control}
+                name={`priceVariations.${index}.quantity`}
+                render={({ field }) => (
+                  <Input
+                    type="number"
+                    placeholder="0"
+                    {...field}
+                    onChange={(e) =>
+                      field.onChange(parseInt(e.target.value) || 0)
+                    }
+                  />
+                )}
+              />
+            </div>
+            <div className="col-span-2 md:col-span-3">
+              <Label>Supplier</Label>
+              <Controller
+                control={control}
+                name={`priceVariations.${index}.supplier`}
+                render={({ field }) => (
+                  <Select
+                    value={field.value || ""}
+                    onValueChange={field.onChange}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select supplier" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {suppliers.map((supplier: any) => (
+                        <SelectItem key={supplier._id} value={supplier._id}>
+                          {supplier.profile?.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </div>
+
+            <Button
+              type="button"
+              variant="destructive"
+              className=""
+              onClick={() => remove(index)}
+            >
+              Remove
+            </Button>
+          </div>
+        ))}
+
+        <Button
+          type="button"
+          onClick={() =>
+            append({
+              size: null,
+              color: null,
+              costPrice: 0,
+              sellingPrice: 0,
+              sku: "",
+              quantity: 0,
+              supplier: null,
+            })
+          }
+        >
+          Add Price Variation
+        </Button>
+      </div>
+
+      {/* Submit Button */}
+      <div className="flex justify-end pt-4">
         <Button type="submit" disabled={isUploading}>
-          {initialData ? "Update Product" : "Add Product"}
+          {isAdd ? "Add Product" : "Update Product"}
         </Button>
       </div>
     </form>

@@ -1,4 +1,5 @@
 import { baseApi } from "@/redux/baseApi";
+import { buildParams } from "@/utills/paramBuilder";
 
 export const userApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
@@ -7,7 +8,7 @@ export const userApi = baseApi.injectEndpoints({
       invalidatesTags: ["User"],
     }),
     getAllUsers: build.query({
-      query: () => "/users",
+      query: (params) => `/users?${buildParams(params)}`,
       providesTags: ["User"],
     }),
     getMe: build.query({

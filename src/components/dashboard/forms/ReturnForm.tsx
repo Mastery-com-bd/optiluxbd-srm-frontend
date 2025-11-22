@@ -46,7 +46,7 @@ const ReturnForm = ({
   const { data: usersData } = useGetAllUsersQuery(undefined);
   const products = productsData || [];
   const staffMembers =
-    usersData?.data?.filter((u: any) => u.role === "staff") || [];
+    usersData?.data?.items.filter((u: any) => u.role === "staff") || [];
 
   const {
     control,

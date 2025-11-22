@@ -28,6 +28,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import PaginationControls from "@/components/ui/PaginationComponent";
 import {
   Table,
   TableBody,
@@ -49,8 +50,10 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 const SuppliesManagement = () => {
+  const [filters, setFilters] = useState({ limit: 10, page: 1 });
   const { user } = useAuth();
-  const { data: suppliesData, isLoading } = useGetAllSuppliesQuery(undefined);
+  const { data: suppliesData, isLoading } = useGetAllSuppliesQuery(filters);
+  const pagination = suppliesData?.data?.pagination || { page: 1, totalPages: 1, total: 0 };
   const [createSupply] = useCreateSupplyMutation();
   const [updateSupply] = useUpdateSupplyMutation();
   const [deleteSupply] = useDeleteSupplyMutation();
@@ -62,9 +65,8 @@ const SuppliesManagement = () => {
   const [deletingSupply, setDeletingSupply] = useState<any | null>(null);
   const [viewingSupply, setViewingSupply] = useState<any | null>(null);
 
-  const supplies = suppliesData?.data || [];
-  console.log({ supplies });
-  const users = usersData?.data || [];
+  const supplies = suppliesData?.data?.items || [];
+  const users = usersData?.data?.items || [];
 
   const filteredSupplies = supplies.filter((supply: any) => {
     const supplier = users.find((u: any) => u._id === supply.supplier);
@@ -157,7 +159,7 @@ const SuppliesManagement = () => {
   if (isLoading) return <div>Loading...</div>;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-[87vw] lg:w-full">
       <div className="flex justify-between items-center flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold">Supplies Management</h1>
@@ -280,7 +282,12 @@ const SuppliesManagement = () => {
           </div>
         </CardContent>
       </Card>
-
+      {/* pagination */}
+      <PaginationControls
+        pagination={pagination}
+        onPrev={() => setFilters({ ...filters, page: filters.page - 1 })}
+        onNext={() => setFilters({ ...filters, page: filters.page + 1 })}
+      />
       {/* View Modal */}
       {viewingSupply && (
         <SupplyDetailModal

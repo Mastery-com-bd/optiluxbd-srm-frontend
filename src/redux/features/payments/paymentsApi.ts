@@ -54,7 +54,7 @@ export const paymentsApi = baseApi.injectEndpoints({
       query: (id) => `/payments/${id}`,
       providesTags: (id) => [{ type: "Payments", id }],
     }),
-
+    
     // ✅ Generate new payment (Admin only)
     generatePayment: build.mutation({
       query: (body) => ({
@@ -101,6 +101,14 @@ export const paymentsApi = baseApi.injectEndpoints({
         responseHandler: (response) => response.blob(),
       }),
     }),
+
+    manualPayment: build.mutation({
+      query: (body) => ({
+        url: `/payments/manual`,
+        method: "POST",
+        body,
+      })
+    })
   }),
 });
 
@@ -113,4 +121,5 @@ export const {
   useDeletePaymentMutation,
   useMarkPaidMutation,
   useGetPaymentPDFQuery,
+  useManualPaymentMutation,
 } = paymentsApi;

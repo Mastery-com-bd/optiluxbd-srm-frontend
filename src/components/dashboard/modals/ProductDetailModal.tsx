@@ -207,7 +207,7 @@ const ProductDetailModal = ({ product }: ProductDetailModalProps) => {
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancel</AlertDialogCancel>
                               <AlertDialogAction
-                                onClick={() => handleDeleteSupplier(product._id, pv.supplier?._id)}
+                                onClick={() => handleDeleteSupplier(product._id, pv?._id)}
                               >
                                 Yes, Delete
                               </AlertDialogAction>

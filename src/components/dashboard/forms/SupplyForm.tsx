@@ -10,12 +10,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useGetProductsQuery } from "@/redux/features/inventory/inventoryApi";
-import { useGetAllUsersQuery } from "@/redux/features/user/userApi";
+import { useGetSuppliersQuery } from "@/redux/features/user/userApi";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Trash2 } from "lucide-react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
+import { useGetSupplyBySupplierIdQuery } from "@/redux/features/supply/supplyApi";
 
 // Schema
 const supplyProductSchema = z.object({
@@ -34,6 +34,7 @@ const supplySchema = z.object({
 });
 
 type SupplyFormData = z.infer<typeof supplySchema>;
+
 type SupplyFormSubmit = SupplyFormData & {
   totalAmount: number;
   commissionAmount: number;
@@ -45,13 +46,12 @@ interface SupplyFormProps {
 }
 
 const SupplyForm = ({ onSubmit }: SupplyFormProps) => {
-  const { data: usersData } = useGetAllUsersQuery(undefined);
-  const { data: productsData } = useGetProductsQuery(undefined);
 
-  const suppliers =
-    usersData?.data?.items.filter((u: any) => u.role === "supplier") || [];
-  const products = productsData?.items || [];
-  console.log("supplier", products);
+
+  const { data: usersData } = useGetSuppliersQuery(undefined);
+
+  const suppliers = usersData?.data || [];
+
 
   const {
     control,
@@ -76,17 +76,44 @@ const SupplyForm = ({ onSubmit }: SupplyFormProps) => {
 
   // Supplier search state
   const [supplierSearch, setSupplierSearch] = useState("");
-
   const filteredSuppliers = suppliers.filter((supplier: any) =>
     supplier?.profile?.name
       ?.toLowerCase()
       .includes(supplierSearch.toLowerCase())
   );
+  const selectedSupplier = watch("supplier");
+  const { data: suppliesData } = useGetSupplyBySupplierIdQuery(selectedSupplier, {
+    skip: !selectedSupplier,
+  });
+  // Product search state
+  const [productSearch, setProductSearch] = useState("");
+  const products = suppliesData?.data || [];
+  const filteredProducts = products.filter((p: { name: string; }) =>
+    p.name.toLowerCase().includes(productSearch.toLowerCase())
+  );
+
+
 
   const handleProductSelect = (productId: string, index: number) => {
     const selectedProduct = products.find((p: any) => p._id === productId);
+    const supplierId = selectedSupplier;
+
     if (selectedProduct) {
-      setValue(`products.${index}.costPrice`, selectedProduct.costPrice || 0);
+      const matchingVariation = selectedProduct.priceVariations?.find(
+        (v: any) => {
+          const variationSupplierId =
+            typeof v.supplier === "string"
+              ? v.supplier
+              : v.supplier?._id;
+          return variationSupplierId === supplierId;
+        }
+      );
+
+      const costPrice = matchingVariation?.costPrice ?? 0;
+      const quantity = matchingVariation?.quantity ?? 0;
+
+      setValue(`products.${index}.costPrice`, costPrice);
+      setValue(`products.${index}.quantity`, quantity);
     }
   };
 
@@ -171,8 +198,9 @@ const SupplyForm = ({ onSubmit }: SupplyFormProps) => {
         {fields.map((field, index) => (
           <div
             key={field.id}
-            className="flex flex-wrap gap-2 mb-2 items-center"
+            className="space-y-1 mb-4 border border-muted p-4 rounded-md bg-background"
           >
+            {/* Product Select */}
             <Controller
               name={`products.${index}.product`}
               control={control}
@@ -184,52 +212,85 @@ const SupplyForm = ({ onSubmit }: SupplyFormProps) => {
                   }}
                   value={field.value}
                 >
-                  <SelectTrigger className="w-[200px]">
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select product" />
                   </SelectTrigger>
                   <SelectContent>
-                    {products.map((product: any) => (
-                      <SelectItem key={product._id} value={product._id}>
-                        {product.name}
-                      </SelectItem>
-                    ))}
+                    <div className="p-2">
+                      <Input
+                        placeholder="Search product..."
+                        value={productSearch}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setProductSearch(val);
+                        }}
+                        className="h-8 text-sm"
+                      />
+                    </div>
+                    {filteredProducts.length > 0 ? (
+                      filteredProducts.map((product: any) => (
+                        <SelectItem key={product._id} value={product._id}>
+                          {product.name}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <div className="px-3 py-2 text-muted-foreground text-sm">
+                        No products found.
+                      </div>
+                    )}
                   </SelectContent>
                 </Select>
               )}
             />
-            <Controller
-              name={`products.${index}.quantity`}
-              control={control}
-              render={({ field }) => (
-                <Input
-                  type="number"
-                  placeholder="Quantity"
-                  min={1}
-                  {...field}
-                  onChange={(e) => field.onChange(Number(e.target.value))}
+
+            {/* Cost Price & Quantity Row */}
+            <div className="flex gap-4 my-2">
+              <div className="flex-1">
+                <Label className="my-2">Quantity</Label>
+                <Controller
+                  name={`products.${index}.quantity`}
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      type="number"
+                      placeholder="Quantity"
+                      min={1}
+                      {...field}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                    />
+                  )}
                 />
-              )}
-            />
-            <Controller
-              name={`products.${index}.costPrice`}
-              control={control}
-              render={({ field }) => (
-                <Input
-                  type="number"
-                  placeholder="Cost Price"
-                  min={0}
-                  {...field}
-                  onChange={(e) => field.onChange(Number(e.target.value))}
+              </div>
+              <div className="flex-1">
+                <Label className="my-2">Cost Price</Label>
+                <Controller
+                  name={`products.${index}.costPrice`}
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      type="number"
+                      placeholder="Cost Price"
+                      min={0}
+                      {...field}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                    />
+                  )}
                 />
-              )}
-            />
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={() => remove(index)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+              </div>
+            </div>
+
+            {/* Remove Button */}
+            <div className="pt-2">
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                onClick={() => remove(index)}
+              >
+                <Trash2 className="h-4 w-4" />
+                <span className="ml-1">Remove</span>
+              </Button>
+            </div>
           </div>
         ))}
         <Button type="button" onClick={addProduct}>
@@ -304,7 +365,9 @@ const SupplyForm = ({ onSubmit }: SupplyFormProps) => {
             </div>
             <div className="flex justify-between">
               <span>Net Amount:</span>
-              <span className="font-medium">৳{netAmount.toLocaleString()}</span>
+              <span className="font-medium">
+                ৳{netAmount.toLocaleString()}
+              </span>
             </div>
           </div>
         </div>

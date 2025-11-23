@@ -1,4 +1,5 @@
 import { baseApi } from "@/redux/baseApi";
+import { buildParams } from "@/utills/paramBuilder";
 
 export const supplyApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -14,8 +15,8 @@ export const supplyApi = baseApi.injectEndpoints({
 
     // 🔹 Get All Supplies
     getAllSupplies: builder.query({
-      query: () => ({
-        url: "/supply",
+      query: (params) => ({
+        url: `/supply?${buildParams(params)}`,
         method: "GET",
       }),
       providesTags: ["Supply"],

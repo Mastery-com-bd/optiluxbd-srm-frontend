@@ -52,6 +52,7 @@ import {
   useUpdatePaymentMutation,
 } from "@/redux/features/payments/paymentsApi";
 import { useGetAllUsersQuery } from "@/redux/features/user/userApi";
+import { debounce } from "@/utills/debounce";
 import {
   Calendar,
   DollarSign,
@@ -66,7 +67,7 @@ import { useNavigate } from "react-router";
 import { toast } from "sonner";
 
 const PaymentManagement = () => {
-  const [filters, setFilters] = useState({ limit: 10, page: 1 });
+  const [filters, setFilters] = useState({ limit: 10, page: 1, search: "" });
   const { user } = useAuth();
   const navigate = useNavigate();
   const [dateFilter, setDateFilter] = useState({ startDate: "", endDate: "" });
@@ -91,19 +92,24 @@ const PaymentManagement = () => {
   const [updatePayment] = useUpdatePaymentMutation();
   const [deletePayment] = useDeletePaymentMutation();
 
-  const [searchTerm, setSearchTerm] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingPayment, setEditingPayment] = useState<any | null>(null);
   const [viewingPayment, setViewingPayment] = useState<any | null>(null);
   const [commissionModalOpen, setCommissionModalOpen] = useState(false);
-
+  const [inputValue, setInputValue] = useState("")
 
   const payments = useDateFilter
     ? filteredPaymentsData?.data?.items || []
     : paymentsData?.data?.items || [];
   const pagination = paymentsData?.pagination || { page: 1, totalPages: 1, total: 0 };
   const users = usersData?.data?.items.items || [];
+
+  const handleSearch = async (val: any) => {
+    setFilters({ ...filters, search: val });
+  };
+
+  const debouncedLog = debounce(handleSearch, 2000, { leading: false });
   // Fixed: Handle both nested supplier object and supplier ID
   const getSupplierFromPayment = (payment: any) => {
     if (payment.supplier && typeof payment.supplier === "object") {
@@ -115,13 +121,7 @@ const PaymentManagement = () => {
     }
   };
 
-  // Fixed: Handle both nested supplier object and supplier ID
-  const filteredPayments = payments?.filter((payment: any) => {
-    const supplier = getSupplierFromPayment(payment);
-    return supplier?.profile?.name
-      ?.toLowerCase()
-      .includes(searchTerm.toLowerCase());
-  });
+
 
   const handleAddPayment = async (paymentData: any) => {
     try {
@@ -237,10 +237,10 @@ const PaymentManagement = () => {
   // Filter payments based on user role
   const displayPayments =
     user?.role === "supplier"
-      ? filteredPayments.filter(
+      ? payments.filter(
         (payment: any) => getSupplierId(payment) === user._id
       )
-      : filteredPayments;
+      : payments;
 
   if (user?.role !== "admin") {
     return <PreventAccessRoutes />;
@@ -473,8 +473,8 @@ const PaymentManagement = () => {
             <Search className="h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search by supplier..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              value={inputValue}
+              onChange={(e) => { debouncedLog(e.target.value); setInputValue(e.target.value) }}
               className="max-w-sm"
             />
           </div>

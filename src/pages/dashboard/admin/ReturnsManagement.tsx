@@ -51,9 +51,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import PaginationControls from "@/components/ui/PaginationComponent";
+import { debounce } from "@/utills/debounce";
 
 const ReturnsManagement = () => {
-  const [filters, setFilters] = useState({ limit: 10, page: 1 });
+  const [filters, setFilters] = useState({ limit: 10, page: 1, search: "" });
   const { user } = useAuth();
   const {
     data: returnsData,
@@ -65,7 +66,7 @@ const ReturnsManagement = () => {
   const [updateReturn] = useUpdateReturnMutation();
   const [deleteReturn] = useDeleteReturnMutation();
 
-  const [searchTerm, setSearchTerm] = useState("");
+  const [inputValue, setInputValue] = useState("")
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingReturn, setEditingReturn] = useState<any | null>(null);
@@ -74,21 +75,25 @@ const ReturnsManagement = () => {
   const [returnToDelete, setReturnToDelete] = useState<any | null>(null);
 
   const returns = returnsData?.data?.items || [];
+  const handleSearch = async (val: any) => {
+    setFilters({ ...filters, search: val });
+  };
 
-  const filteredReturns = returns.filter((returnItem: any) => {
-    const productName = returnItem.productId?.name?.toLowerCase() || "";
-    const staffName =
-      returnItem.staffId?.profile?.name?.toLowerCase() ||
-      returnItem.staffId?.name?.toLowerCase() ||
-      "";
-    const reason = returnItem.reason?.toLowerCase() || "";
+  const debouncedLog = debounce(handleSearch, 2000, { leading: false });
+  // const filteredReturns = returns.filter((returnItem: any) => {
+  //   const productName = returnItem.productId?.name?.toLowerCase() || "";
+  //   const staffName =
+  //     returnItem.staffId?.profile?.name?.toLowerCase() ||
+  //     returnItem.staffId?.name?.toLowerCase() ||
+  //     "";
+  //   const reason = returnItem.reason?.toLowerCase() || "";
 
-    return (
-      productName.includes(searchTerm.toLowerCase()) ||
-      staffName.includes(searchTerm.toLowerCase()) ||
-      reason.includes(searchTerm.toLowerCase())
-    );
-  });
+  //   return (
+  //     productName.includes(searchTerm.toLowerCase()) ||
+  //     staffName.includes(searchTerm.toLowerCase()) ||
+  //     reason.includes(searchTerm.toLowerCase())
+  //   );
+  // });
 
   const handleAddReturn = async (returnData: any) => {
     try {
@@ -148,7 +153,7 @@ const ReturnsManagement = () => {
   };
 
   const handleProcessReturn = async (returnId: string) => {
-    const returnItem = filteredReturns.find((r: any) => r._id === returnId);
+    const returnItem = returns.find((r: any) => r._id === returnId);
     if (!returnItem) return;
 
     if (returnItem.status === "completed") {
@@ -204,10 +209,10 @@ const ReturnsManagement = () => {
 
   const displayReturns =
     user?.role === "staff"
-      ? filteredReturns.filter(
+      ? returns.filter(
         (returnItem: any) => getStaffId(returnItem.staffId) === user._id
       )
-      : filteredReturns;
+      : returns;
 
   if (user?.role !== "admin" && user?.role !== "staff") {
     return <PreventAccessRoutes />;
@@ -309,8 +314,8 @@ const ReturnsManagement = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search returns..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={inputValue}
+                onChange={(e) => { debouncedLog(e.target.value); setInputValue(e.target.value) }}
                 className="pl-10 w-full"
               />
             </div>

@@ -49,7 +49,7 @@ export const inventoryApi = baseApi.injectEndpoints({
     }),
     deleteSupplier: build.mutation<void, { productId: string; supplierId: string }>({
       query: ({ productId, supplierId }) => ({
-        url: `/inventory/${productId}/suppliers/${supplierId}`,
+        url: `/inventory/${productId}/price-variations/${supplierId}`,
         method: "DELETE",
       }),
     }),

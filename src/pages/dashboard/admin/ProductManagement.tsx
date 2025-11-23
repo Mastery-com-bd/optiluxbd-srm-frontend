@@ -44,6 +44,7 @@ import {
   useDeleteProductMutation,
   useGetProductsQuery,
 } from "@/redux/features/inventory/inventoryApi";
+import { debounce } from "@/utills/debounce";
 import {
   AlertTriangle,
   Edit,
@@ -56,22 +57,18 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 const ProductManagement = () => {
-  const [filters, setFilters] = useState({ limit: 10, page: 1 });
+  const [filters, setFilters] = useState({ limit: 10, page: 1, search: "" });
   const { user } = useAuth();
   const { data: productsData, isLoading } = useGetProductsQuery(filters);
   const [deleteProduct] = useDeleteProductMutation();
-  const [searchQuery, setSearchQuery] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any | null>(null);
   const products = productsData?.items || [];
   const pagination = productsData?.pagination || { page: 1, totalPages: 1, total: 0 };
+  const [inputValue, setInputValue] = useState("")
 
-  const filteredProducts = products.filter((product: any) =>
-    product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    product.category.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
-  const lowStockProducts = filteredProducts.filter(
+  const lowStockProducts = products.filter(
     (product: any) => product.totalQuantity <= product.minimumStock
   );
 
@@ -121,7 +118,11 @@ const ProductManagement = () => {
   if (isLoading) {
     return <SkeletonLoader />;
   }
+  const handleSearch = async (val: any) => {
+    setFilters({ ...filters, search: val });
+  };
 
+  const debouncedLog = debounce(handleSearch, 2000, { leading: false });
   return (
     <div className="space-y-6 w-[87vw] lg:w-full overflow-hidden">
       <div className="flex justify-between items-center">
@@ -188,8 +189,8 @@ const ProductManagement = () => {
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search products..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                value={inputValue}
+                onChange={(e) => { debouncedLog(e.target.value); setInputValue(e.target.value) }}
                 className="pl-10"
               />
             </div>
@@ -214,7 +215,7 @@ const ProductManagement = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredProducts.map((product: any, index: number) => {
+              {products.map((product: any, index: number) => {
                 const stockStatus = getStockStatus(
                   product.totalQuantity,
                   product.minimumStock

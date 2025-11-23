@@ -33,12 +33,13 @@
 // } = paymentsApi;
 
 import { baseApi } from "@/redux/baseApi";
+import { buildParams } from "@/utills/paramBuilder";
 
 export const paymentsApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
     // ✅ Get all payments (Admin only)
     getAllPayments: build.query({
-      query: () => "/payments",
+      query: (params) => `/payments?${buildParams(params)}`,
       providesTags: ["Payments"],
     }),
 
@@ -54,7 +55,7 @@ export const paymentsApi = baseApi.injectEndpoints({
       query: (id) => `/payments/${id}`,
       providesTags: (id) => [{ type: "Payments", id }],
     }),
-    
+
     // ✅ Generate new payment (Admin only)
     generatePayment: build.mutation({
       query: (body) => ({

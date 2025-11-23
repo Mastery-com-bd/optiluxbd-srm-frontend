@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useForm, Controller } from "react-hook-form";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
     Dialog,
     DialogTrigger,
@@ -22,7 +22,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { useGetAllUsersQuery } from "@/redux/features/user/userApi";
+import { useGetSuppliersQuery } from "@/redux/features/user/userApi";
 import { useGetSupplyBySupplierIdQuery } from "@/redux/features/supply/supplyApi";
 import { useManualPaymentMutation } from "@/redux/features/payments/paymentsApi";
 import { toast } from "sonner";
@@ -36,7 +36,7 @@ type ManualPaymentForm = {
     paidAmount: number;
     dueAmount: number;
     status: "paid" | "partial" | "unpaid";
-    paymentDate: Date;
+    paymentDate: Date | string;
     manualPaymentDetails: {
         description: string;
         referenceNumber: string;
@@ -45,14 +45,14 @@ type ManualPaymentForm = {
 };
 
 const ManualPayment = () => {
-    const { data: usersData } = useGetAllUsersQuery(undefined);
+    const { data: usersData } = useGetSuppliersQuery(undefined);
     const [manualPayment] = useManualPaymentMutation();
-
-    const suppliers =
-        usersData?.data?.items.filter((user: any) => user.role === "supplier") || [];
+    const suppliers = usersData?.data || [];
 
     const [open, setOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
+    const [supplierSearchTerm, setSupplierSearchTerm] = useState("");
+
     const {
         register,
         handleSubmit,
@@ -79,41 +79,52 @@ const ManualPayment = () => {
     });
 
     const selectedSupplierId = watch("supplier");
-    const { data: suppliesData } = useGetSupplyBySupplierIdQuery(selectedSupplierId,
-        {
-            skip: !selectedSupplierId,
-        }
-    );
 
-    const [supplies, setSupplies] = useState([]);
+    const { data: suppliesData } = useGetSupplyBySupplierIdQuery(selectedSupplierId, {
+        skip: !selectedSupplierId,
+    });
 
+    const [supplies, setSupplies] = useState<any[]>([]);
     useEffect(() => {
         if (suppliesData?.data && Array.isArray(suppliesData.data)) {
             const keyword = searchTerm.toLowerCase();
             const filtered = suppliesData.data.filter((supply: any) =>
-                (supply.name || "").toLowerCase().includes(keyword)
+                (supply.name || "").toLowerCase().includes(keyword),
             );
             setSupplies(filtered);
         }
     }, [searchTerm, suppliesData?.data]);
+
+    useEffect(() => {
+        if (!open) {
+            setSupplierSearchTerm("");
+        }
+    }, [open]);
+
+    const filteredSuppliers = useMemo(() => {
+        return suppliers.filter((supplier: any) => {
+            const name = supplier.profile?.name || supplier.email || "";
+            return name.toLowerCase().includes(supplierSearchTerm.toLowerCase());
+        });
+    }, [supplierSearchTerm, suppliers]);
 
     const onSubmit = async (data: ManualPaymentForm) => {
         const paymentDetails: ManualPaymentForm = {
             ...data,
             paymentDate: new Date(data.paymentDate),
         };
-        const toastId = toast.loading("adding payment....");
+        const toastId = toast.loading("Adding payment...");
         try {
             await manualPayment(paymentDetails).unwrap();
-            toast.success("payment successful", {
-                id: toastId
-            })
+            toast.success("Payment successful", {
+                id: toastId,
+            });
             setOpen(false);
             reset();
         } catch (error: any) {
-            toast.error("failed to payment...", {
+            toast.error("Failed to make payment", {
                 id: toastId,
-            })
+            });
             console.log("error:", error);
         }
     };
@@ -128,28 +139,46 @@ const ManualPayment = () => {
                     <DialogHeader>
                         <DialogTitle>Manual Payment</DialogTitle>
                         <DialogDescription>
-                            Create new payment entry manually.
+                            Create a new payment entry manually.
                         </DialogDescription>
                     </DialogHeader>
 
                     <div className="grid gap-4 py-4">
-                        {/* Supplier Select */}
+                        {/* Supplier Select with search */}
                         <div>
                             <Label>Supplier</Label>
                             <Controller
                                 name="supplier"
                                 control={control}
                                 render={({ field }) => (
-                                    <Select value={field.value} onValueChange={field.onChange}>
+                                    <Select
+                                        value={field.value}
+                                        onValueChange={field.onChange}
+                                    >
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select supplier" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {suppliers.map((supplier: any) => (
-                                                <SelectItem key={supplier._id} value={supplier._id}>
-                                                    {supplier.profile?.name || supplier.email}
-                                                </SelectItem>
-                                            ))}
+                                            <div className="px-2 pt-2 pb-1">
+                                                <Input
+                                                    placeholder="Search supplier..."
+                                                    value={supplierSearchTerm}
+                                                    onChange={(e) => setSupplierSearchTerm(e.target.value)}
+                                                />
+                                            </div>
+                                            <div className="max-h-60 overflow-y-auto">
+                                                {filteredSuppliers.length === 0 ? (
+                                                    <div className="text-sm px-2 py-2 text-muted-foreground">
+                                                        No suppliers found.
+                                                    </div>
+                                                ) : (
+                                                    filteredSuppliers.map((supplier: any) => (
+                                                        <SelectItem key={supplier._id} value={supplier._id}>
+                                                            {supplier.profile?.name || supplier.email}
+                                                        </SelectItem>
+                                                    ))
+                                                )}
+                                            </div>
                                         </SelectContent>
                                     </Select>
                                 )}
@@ -163,7 +192,6 @@ const ManualPayment = () => {
                                 name="supplies"
                                 control={control}
                                 render={({ field }) => {
-
                                     return (
                                         <div className="space-y-2 border rounded-md p-2">
                                             <Input
@@ -180,9 +208,8 @@ const ManualPayment = () => {
                                                 <div className="max-h-48 overflow-y-auto space-y-1 pr-1">
                                                     {supplies.map((supply: any) => {
                                                         const supplyId = supply._id;
-                                                        const name = supply?.name
+                                                        const name = supply?.name;
                                                         const isChecked = field.value.includes(supplyId);
-
                                                         return (
                                                             <label
                                                                 key={supplyId}
@@ -273,7 +300,7 @@ const ManualPayment = () => {
                             </div>
                         </div>
 
-                        {/* Date Input */}
+                        {/* Payment Date */}
                         <div>
                             <Label>Payment Date</Label>
                             <Input

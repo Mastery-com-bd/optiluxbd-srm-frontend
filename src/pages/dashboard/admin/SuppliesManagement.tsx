@@ -44,39 +44,28 @@ import {
   useGetAllSuppliesQuery,
   useUpdateSupplyMutation,
 } from "@/redux/features/supply/supplyApi";
-import { useGetAllUsersQuery } from "@/redux/features/user/userApi";
+import { debounce } from "@/utills/debounce";
 import { Eye, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
 const SuppliesManagement = () => {
-  const [filters, setFilters] = useState({ limit: 10, page: 1 });
+  const [filters, setFilters] = useState({ limit: 10, page: 1, search: "" });
   const { user } = useAuth();
   const { data: suppliesData, isLoading } = useGetAllSuppliesQuery(filters);
   const pagination = suppliesData?.data?.pagination || { page: 1, totalPages: 1, total: 0 };
   const [createSupply] = useCreateSupplyMutation();
   const [updateSupply] = useUpdateSupplyMutation();
   const [deleteSupply] = useDeleteSupplyMutation();
-  const { data: usersData } = useGetAllUsersQuery(undefined);
 
-  const [searchTerm, setSearchTerm] = useState("");
+  const [inputValue, setInputValue] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingSupply, setEditingSupply] = useState<any | null>(null);
   const [deletingSupply, setDeletingSupply] = useState<any | null>(null);
   const [viewingSupply, setViewingSupply] = useState<any | null>(null);
 
   const supplies = suppliesData?.data?.items || [];
-  const users = usersData?.data?.items || [];
 
-  const filteredSupplies = supplies.filter((supply: any) => {
-    const supplier = users.find((u: any) => u._id === supply.supplier);
-    return (
-      supply.products.some((p: any) =>
-        p.product.name.toLowerCase().includes(searchTerm.toLowerCase())
-      ) ||
-      supplier?.profile.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  });
 
   const handleAddSupply = async (supplyData: any) => {
     try {
@@ -130,10 +119,7 @@ const SuppliesManagement = () => {
     );
   };
 
-  // const getSupplierName = (supplierId: string) => {
-  //   const supplier = users.find((u: any) => u._id === supplierId);
-  //   return supplier?.profile.name || "Unknown Supplier";
-  // };
+
 
   const getProductNames = (products: any[]) =>
     products.length > 1
@@ -143,10 +129,13 @@ const SuppliesManagement = () => {
   const getTotalQuantity = (products: any[]) =>
     products.reduce((sum: number, p: any) => sum + p.quantity, 0);
 
-  const displaySupplies =
-    user?.role === "supplier"
-      ? filteredSupplies.filter((s: any) => s.supplier === user._id)
-      : filteredSupplies;
+
+  const handleSearch = async (val: any) => {
+    setFilters({ ...filters, search: val });
+  };
+
+  const debouncedLog = debounce(handleSearch, 100, { leading: false });
+
 
   if (
     user?.role !== "admin" &&
@@ -193,14 +182,14 @@ const SuppliesManagement = () => {
           <CardTitle>Supplies</CardTitle>
           <CardDescription>
             Total supplies: {supplies.length} | Showing:{" "}
-            {displaySupplies.length}
+            {supplies.length}
           </CardDescription>
           <div className="flex items-center space-x-2">
             <Search className="h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search supplies..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              value={inputValue}
+              onChange={(e) => { debouncedLog(e.target.value); setInputValue(e.target.value) }}
               className="max-w-sm"
             />
           </div>
@@ -224,7 +213,7 @@ const SuppliesManagement = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {displaySupplies.map((supply: any, index: number) => (
+                {supplies.map((supply: any, index: number) => (
                   <TableRow key={supply._id}>
                     <TableCell>{index + 1}</TableCell>
                     <TableCell className="font-medium">

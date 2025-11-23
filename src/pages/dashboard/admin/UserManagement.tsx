@@ -66,9 +66,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import PaginationControls from "@/components/ui/PaginationComponent";
+import { debounce } from "@/utills/debounce";
 
 const UserManagement = () => {
-  const [filters, setFilters] = useState({ limit: 10, page: 1 });
+  const [filters, setFilters] = useState({ limit: 10, page: 1, search: "" });
   const { user: currentUser } = useAuth();
   const {
     data: usersData,
@@ -79,8 +80,8 @@ const UserManagement = () => {
   const [blockUser] = useBlockUserMutation();
   const [deleteUser] = useDeleteUserMutation();
   const navigate = useNavigate();
-
-  const [searchTerm, setSearchTerm] = useState("");
+  const [inputValue, setInputValue] = useState("")
+  // const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
 
@@ -95,16 +96,7 @@ const UserManagement = () => {
   const users = usersData?.data?.items || [];
   const pagination = usersData?.pagination || { page: 1, totalPages: 1, total: 0 };
 
-  const filteredUsers = users?.filter((user: any) => {
-    const matchesSearch =
-      user.profile.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = roleFilter === "all" || user.role === roleFilter;
-    const matchesStatus =
-      statusFilter === "all" || user.status === statusFilter;
 
-    return matchesSearch && matchesRole && matchesStatus;
-  });
 
   const handleApproveUser = async (userId: string, userName: string) => {
     try {
@@ -170,6 +162,12 @@ const UserManagement = () => {
     }
   };
 
+  const handleSearch = async (val: any) => {
+    setFilters({ ...filters, search: val });
+  };
+
+  const debouncedLog = debounce(handleSearch, 100, { leading: false });
+  
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
       case "admin":
@@ -226,7 +224,7 @@ const UserManagement = () => {
         <CardHeader>
           <CardTitle>Users</CardTitle>
           <CardDescription>
-            Manage all users in the system. Total: {filteredUsers.length} users
+            Manage all users in the system. Total: {users.length} users
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -235,8 +233,8 @@ const UserManagement = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search users by name or email..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={inputValue}
+                onChange={(e) => { debouncedLog(e.target.value); setInputValue(e.target.value) }}
                 className="pl-10"
               />
             </div>
@@ -277,7 +275,7 @@ const UserManagement = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredUsers.length === 0 ? (
+              {users.length === 0 ? (
                 <TableRow>
                   <TableCell
                     colSpan={7}
@@ -287,7 +285,7 @@ const UserManagement = () => {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredUsers?.map((user: any, index: number) => (
+                users?.map((user: any, index: number) => (
                   <TableRow key={user._id}>
                     <TableCell className="font-medium text-center">
                       {index + 1}

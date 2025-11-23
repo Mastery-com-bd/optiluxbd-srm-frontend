@@ -11,6 +11,12 @@ export const userApi = baseApi.injectEndpoints({
       query: (params) => `/users?${buildParams(params)}`,
       providesTags: ["User"],
     }),
+    getSuppliers: build.query({
+      query: () => ({
+        url: "/users/users-suppliers",
+        method: "GET",
+      }),
+    }),
     getMe: build.query({
       query: () => "/users/me",
       providesTags: ["User"],
@@ -61,4 +67,5 @@ export const {
   useApproveUserMutation,
   useBlockUserMutation,
   useDeleteUserMutation,
+  useGetSuppliersQuery,
 } = userApi;

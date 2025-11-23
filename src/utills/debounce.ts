@@ -57,7 +57,7 @@ export function debounce<T extends (...args: any[]) => any>(
         );
     };
 
-    const trailingEdge = (time: number) => {
+    const trailingEdge = () => {
         timerId = null;
         if (trailing && lastArgs) return invoke(lastThis, lastArgs);
         lastArgs = lastThis = undefined;
@@ -66,7 +66,7 @@ export function debounce<T extends (...args: any[]) => any>(
 
     function timerExpired() {
         const now = Date.now();
-        if (shouldInvoke(now)) return trailingEdge(now);
+        if (shouldInvoke(now)) return trailingEdge();
         timerId = startTimer(timerExpired, remainingWait(now));
     }
 
@@ -100,7 +100,7 @@ export function debounce<T extends (...args: any[]) => any>(
 
     debounced.flush = () => {
         if (!timerId) return result;
-        return trailingEdge(Date.now());
+        return trailingEdge();
     };
 
     debounced.pending = () => !!timerId;
